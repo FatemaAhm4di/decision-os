@@ -1,31 +1,23 @@
-import { Decision } from "@/types/decision";
-
 type DecisionCardProps = {
-  decision: Decision;
+  decision: {
+    id: string;
+    title: string;
+    createdAt: string;
+  };
 };
 
 export function DecisionCard({
   decision,
 }: DecisionCardProps) {
   return (
-    <div className="rounded-lg border p-4">
-      <h2 className="text-lg font-semibold">
+    <div className="rounded-xl border p-4">
+      <h3 className="text-lg font-semibold">
         {decision.title}
-      </h2>
+      </h3>
 
       <p className="mt-2 text-sm text-gray-500">
-        ID: {decision.id}
+        {new Date(decision.createdAt).toLocaleDateString()}
       </p>
-
-      <div className="mt-4 flex gap-4 text-sm">
-        <span>
-          Options: {decision.options.length}
-        </span>
-
-        <span>
-          Criteria: {decision.criteria.length}
-        </span>
-      </div>
     </div>
   );
 }

@@ -1,29 +1,42 @@
 import { NextResponse } from "next/server";
-import { Decision } from "@/types/decision";
-import { calculateDecision } from "@/lib/engine/calculate";
-
-const store: Decision[] = [];
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  try {
+    const body = await req.json();
 
-  const decision: Decision = {
-    id: crypto.randomUUID(),
-    title: body.title || "Untitled Decision",
-    options: body.options || [],
-    criteria: body.criteria || [],
-  };
+    const decision = await prisma.decision.create({
+      data: {
+        title: body.title || "Untitled Decision",
+      },
+    });
 
-  store.push(decision);
+    return NextResponse.json(decision);
+  } catch (error) {
+    console.error(error);
 
-  const result = calculateDecision(decision);
-
-  return NextResponse.json({
-    decision,
-    result,
-  });
+    return NextResponse.json(
+      { message: "Failed to create decision" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function GET() {
-  return NextResponse.json(store);
+  try {
+    const decisions = await prisma.decision.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return NextResponse.json(decisions);
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      { message: "Failed to fetch decisions" },
+      { status: 500 }
+    );
+  }
 }
