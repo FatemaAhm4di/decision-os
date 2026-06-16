@@ -7,9 +7,29 @@ datasource db {
 }
 
 model Decision {
-  id        String   @id @default(cuid())
-  title     String
+  id         String      @id @default(cuid())
+  title      String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  options    Option[]
+  criteria   Criterion[]
+
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Option {
+  id          String     @id @default(cuid())
+  name        String
+
+  decisionId  String
+  decision    Decision   @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+}
+
+model Criterion {
+  id          String     @id @default(cuid())
+  name        String
+  weight      Float
+
+  decisionId  String
+  decision    Decision   @relation(fields: [decisionId], references: [id], onDelete: Cascade)
 }

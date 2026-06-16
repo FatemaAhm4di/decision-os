@@ -7,7 +7,40 @@ export async function POST(req: Request) {
 
     const decision = await prisma.decision.create({
       data: {
-        title: body.title || "Untitled Decision",
+        title: body.title,
+
+        options: {
+          create: body.options
+            .filter(
+              (option: { name: string }) =>
+                option.name.trim() !== ""
+            )
+            .map((option: { name: string }) => ({
+              name: option.name,
+            })),
+        },
+
+        criteria: {
+          create: body.criteria
+            .filter(
+              (criterion: { name: string }) =>
+                criterion.name.trim() !== ""
+            )
+            .map(
+              (criterion: {
+                name: string;
+                weight: number;
+              }) => ({
+                name: criterion.name,
+                weight: criterion.weight,
+              })
+            ),
+        },
+      },
+
+      include: {
+        options: true,
+        criteria: true,
       },
     });
 
@@ -25,6 +58,11 @@ export async function POST(req: Request) {
 export async function GET() {
   try {
     const decisions = await prisma.decision.findMany({
+      include: {
+        options: true,
+        criteria: true,
+      },
+
       orderBy: {
         createdAt: "desc",
       },

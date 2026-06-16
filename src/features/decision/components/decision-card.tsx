@@ -1,9 +1,7 @@
+import { Decision } from "@/types/decision";
+
 type DecisionCardProps = {
-  decision: {
-    id: string;
-    title: string;
-    createdAt: string;
-  };
+  decision: Decision;
 };
 
 export function DecisionCard({
@@ -15,9 +13,19 @@ export function DecisionCard({
         {decision.title}
       </h3>
 
-      <p className="mt-2 text-sm text-gray-500">
+      <p className="mt-1 text-sm text-gray-500">
         {new Date(decision.createdAt).toLocaleDateString()}
       </p>
+
+      <div className="mt-4 flex gap-4 text-sm text-gray-600">
+        <span>
+          Options: {decision.options?.length ?? 0}
+        </span>
+
+        <span>
+          Criteria: {decision.criteria?.length ?? 0}
+        </span>
+      </div>
     </div>
   );
 }

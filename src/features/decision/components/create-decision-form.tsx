@@ -3,18 +3,104 @@
 import { useState } from "react";
 
 type DecisionResponse = {
-  decision: unknown;
-  result: unknown;
+  id: string;
+  title: string;
+  createdAt: string;
 };
 
 type Props = {
   onCreated?: () => void;
 };
 
+type Option = {
+  id: string;
+  name: string;
+};
+
+type Criterion = {
+  id: string;
+  name: string;
+  weight: number;
+};
+
 export function CreateDecisionForm({ onCreated }: Props) {
   const [title, setTitle] = useState("");
+
+  const [options, setOptions] = useState<Option[]>([
+    {
+      id: crypto.randomUUID(),
+      name: "",
+    },
+  ]);
+
+  const [criteria, setCriteria] = useState<Criterion[]>([
+    {
+      id: crypto.randomUUID(),
+      name: "",
+      weight: 1,
+    },
+  ]);
+
   const [response, setResponse] = useState<DecisionResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  function addOption() {
+    setOptions((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        name: "",
+      },
+    ]);
+  }
+
+  function removeOption(id: string) {
+    setOptions((prev) =>
+      prev.filter((option) => option.id !== id)
+    );
+  }
+
+  function updateOption(id: string, name: string) {
+    setOptions((prev) =>
+      prev.map((option) =>
+        option.id === id ? { ...option, name } : option
+      )
+    );
+  }
+
+  function addCriterion() {
+    setCriteria((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        name: "",
+        weight: 1,
+      },
+    ]);
+  }
+
+  function removeCriterion(id: string) {
+    setCriteria((prev) =>
+      prev.filter((criterion) => criterion.id !== id)
+    );
+  }
+
+  function updateCriterion(
+    id: string,
+    field: "name" | "weight",
+    value: string | number
+  ) {
+    setCriteria((prev) =>
+      prev.map((criterion) =>
+        criterion.id === id
+          ? {
+              ...criterion,
+              [field]: value,
+            }
+          : criterion
+      )
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,17 +117,32 @@ export function CreateDecisionForm({ onCreated }: Props) {
         },
         body: JSON.stringify({
           title,
-          options: [],
-          criteria: [],
+          options,
+          criteria,
         }),
       });
 
       const data: DecisionResponse = await res.json();
 
       setResponse(data);
+
       setTitle("");
 
-      // مهم: اطلاع به لیست برای آپدیت
+      setOptions([
+        {
+          id: crypto.randomUUID(),
+          name: "",
+        },
+      ]);
+
+      setCriteria([
+        {
+          id: crypto.randomUUID(),
+          name: "",
+          weight: 1,
+        },
+      ]);
+
       onCreated?.();
     } catch (error) {
       console.error(error);
@@ -52,18 +153,108 @@ export function CreateDecisionForm({ onCreated }: Props) {
 
   return (
     <div className="mt-8">
-      <form onSubmit={handleSubmit} className="flex gap-3">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Enter decision title"
-          className="rounded-lg border px-4 py-2"
+          className="w-full rounded-lg border px-4 py-2"
         />
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-medium">Options</h3>
+
+            <button
+              type="button"
+              onClick={addOption}
+              className="rounded-lg border px-3 py-1 text-sm"
+            >
+              Add Option
+            </button>
+          </div>
+
+          {options.map((option) => (
+            <div key={option.id} className="flex gap-2">
+              <input
+                value={option.name}
+                onChange={(e) =>
+                  updateOption(option.id, e.target.value)
+                }
+                placeholder="Option name"
+                className="flex-1 rounded-lg border px-4 py-2"
+              />
+
+              <button
+                type="button"
+                onClick={() => removeOption(option.id)}
+                className="rounded-lg border px-3"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-medium">Criteria</h3>
+
+            <button
+              type="button"
+              onClick={addCriterion}
+              className="rounded-lg border px-3 py-1 text-sm"
+            >
+              Add Criterion
+            </button>
+          </div>
+
+          {criteria.map((criterion) => (
+            <div key={criterion.id} className="flex gap-2">
+              <input
+                value={criterion.name}
+                onChange={(e) =>
+                  updateCriterion(
+                    criterion.id,
+                    "name",
+                    e.target.value
+                  )
+                }
+                placeholder="Criterion name"
+                className="flex-1 rounded-lg border px-4 py-2"
+              />
+
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="1"
+                value={criterion.weight}
+                onChange={(e) =>
+                  updateCriterion(
+                    criterion.id,
+                    "weight",
+                    Number(e.target.value)
+                  )
+                }
+                className="w-24 rounded-lg border px-4 py-2"
+              />
+
+              <button
+                type="button"
+                onClick={() => removeCriterion(criterion.id)}
+                className="rounded-lg border px-3"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
 
         <button
           type="submit"
-          className="rounded-lg border px-4 py-2"
           disabled={isLoading}
+          className="rounded-lg border px-4 py-2"
         >
           {isLoading ? "Creating..." : "Create Decision"}
         </button>
