@@ -1,18 +1,53 @@
-import { Decision } from "@/types/decision";
+type Score = {
+  value: number;
+  criterionId: string;
+};
 
-export function calculateDecision(decision: Decision) {
+type Option = {
+  id: string;
+  name: string;
+  scores: Score[];
+};
+
+type Criterion = {
+  id: string;
+  weight: number;
+};
+
+type Decision = {
+  options: Option[];
+  criteria: Criterion[];
+};
+
+export function calculateDecision(
+  decision: Decision
+) {
   return decision.options
     .map((option) => {
-      const score = decision.criteria.reduce((sum, criterion) => {
-        const value = option.scores[criterion.id] ?? 0;
+      const score = option.scores.reduce(
+        (sum, currentScore) => {
+          const criterion =
+            decision.criteria.find(
+              (item) =>
+                item.id === currentScore.criterionId
+            );
 
-        return sum + value * criterion.weight;
-      }, 0);
+          if (!criterion) {
+            return sum;
+          }
+
+          return (
+            sum +
+            currentScore.value * criterion.weight
+          );
+        },
+        0
+      );
 
       return {
         optionId: option.id,
         name: option.name,
-        score,
+        score: Number(score.toFixed(2)),
       };
     })
     .sort((a, b) => b.score - a.score);

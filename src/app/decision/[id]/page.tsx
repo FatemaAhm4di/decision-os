@@ -1,4 +1,5 @@
 import { ScoreMatrix } from "@/features/decision/components/score-matrix";
+import { calculateDecision } from "@/lib/engine/calculate";
 
 type Score = {
   id: string;
@@ -49,6 +50,8 @@ export default async function DecisionPage({
   }
 
   const decision: Decision = await res.json();
+
+  const results = calculateDecision(decision);
 
   return (
     <div className="space-y-8 p-6">
@@ -107,6 +110,29 @@ export default async function DecisionPage({
           options={decision.options}
           criteria={decision.criteria}
         />
+      </div>
+
+      <div>
+        <h2 className="mb-4 text-xl font-semibold">
+          Results
+        </h2>
+
+        <div className="space-y-3">
+          {results.map((result, index) => (
+            <div
+              key={result.optionId}
+              className="flex items-center justify-between rounded-lg border p-4"
+            >
+              <span className="font-medium">
+                #{index + 1} {result.name}
+              </span>
+
+              <span className="text-lg font-bold">
+                {result.score}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
