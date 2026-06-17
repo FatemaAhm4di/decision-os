@@ -1,3 +1,31 @@
+import { ScoreMatrix } from "@/features/decision/components/score-matrix";
+
+type Score = {
+  id: string;
+  value: number;
+  criterionId: string;
+};
+
+type Option = {
+  id: string;
+  name: string;
+  scores: Score[];
+};
+
+type Criterion = {
+  id: string;
+  name: string;
+  weight: number;
+};
+
+type Decision = {
+  id: string;
+  title: string;
+  createdAt: string;
+  options: Option[];
+  criteria: Criterion[];
+};
+
 type PageProps = {
   params: Promise<{
     id: string;
@@ -20,10 +48,10 @@ export default async function DecisionPage({
     return <div>Decision not found</div>;
   }
 
-  const decision = await res.json();
+  const decision: Decision = await res.json();
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-8 p-6">
       <div>
         <h1 className="text-3xl font-bold">
           {decision.title}
@@ -42,16 +70,14 @@ export default async function DecisionPage({
         </h2>
 
         <ul className="space-y-2">
-          {decision.options.map(
-            (option: { id: string; name: string }) => (
-              <li
-                key={option.id}
-                className="rounded-lg border p-3"
-              >
-                {option.name}
-              </li>
-            )
-          )}
+          {decision.options.map((option) => (
+            <li
+              key={option.id}
+              className="rounded-lg border p-3"
+            >
+              {option.name}
+            </li>
+          ))}
         </ul>
       </div>
 
@@ -61,23 +87,26 @@ export default async function DecisionPage({
         </h2>
 
         <ul className="space-y-2">
-          {decision.criteria.map(
-            (
-              criterion: {
-                id: string;
-                name: string;
-                weight: number;
-              }
-            ) => (
-              <li
-                key={criterion.id}
-                className="rounded-lg border p-3"
-              >
-                {criterion.name} ({criterion.weight})
-              </li>
-            )
-          )}
+          {decision.criteria.map((criterion) => (
+            <li
+              key={criterion.id}
+              className="rounded-lg border p-3"
+            >
+              {criterion.name} ({criterion.weight})
+            </li>
+          ))}
         </ul>
+      </div>
+
+      <div>
+        <h2 className="mb-4 text-xl font-semibold">
+          Scores
+        </h2>
+
+        <ScoreMatrix
+          options={decision.options}
+          criteria={decision.criteria}
+        />
       </div>
     </div>
   );

@@ -19,9 +19,13 @@ export async function GET(
         id,
       },
       include: {
-        options: true,
-        criteria: true,
-      },
+  options: {
+    include: {
+      scores: true,
+    },
+  },
+  criteria: true,
+},
     });
 
     if (!decision) {
