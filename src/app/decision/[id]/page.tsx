@@ -53,6 +53,8 @@ export default async function DecisionPage({
 
   const results = calculateDecision(decision);
 
+  const winner = results[0] ?? null;
+
   return (
     <div className="space-y-8 p-6">
       <div>
@@ -116,6 +118,22 @@ export default async function DecisionPage({
         <h2 className="mb-4 text-xl font-semibold">
           Results
         </h2>
+
+        {winner && (
+          <div className="mb-4 rounded-xl border border-green-500 bg-green-50 p-4">
+            <p className="text-sm text-gray-600">
+              Recommended option
+            </p>
+
+            <h3 className="mt-1 text-2xl font-bold">
+              {winner.name}
+            </h3>
+
+            <p className="mt-1 text-lg">
+              Score: {winner.score}
+            </p>
+          </div>
+        )}
 
         <div className="space-y-3">
           {results.map((result, index) => (
