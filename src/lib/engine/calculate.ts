@@ -22,6 +22,17 @@ type Decision = {
 export function calculateDecision(
   decision: Decision
 ) {
+  const totalWeight = decision.criteria.reduce(
+    (sum, criterion) => sum + criterion.weight,
+    0
+  );
+
+  if (Math.abs(totalWeight - 1) > 0.001) {
+    throw new Error(
+      `Criteria weights must sum to 1. Current total: ${totalWeight}`
+    );
+  }
+
   return decision.options
     .map((option) => {
       const score = option.scores.reduce(

@@ -52,6 +52,7 @@ export default async function DecisionPage({
   const decision: Decision = await res.json();
 
   const results = calculateDecision(decision);
+  
 
   const winner = results[0] ?? null;
 
