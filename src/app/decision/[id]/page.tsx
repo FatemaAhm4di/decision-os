@@ -110,9 +110,10 @@ export default async function DecisionPage({
         </h2>
 
         <ScoreMatrix
-          options={decision.options}
-          criteria={decision.criteria}
-        />
+  decisionId={decision.id}
+  options={decision.options}
+  criteria={decision.criteria}
+/>
       </div>
 
       <div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Score = {
   id: string;
@@ -21,11 +22,13 @@ type Criterion = {
 };
 
 type Props = {
+  decisionId: string;
   options: Option[];
   criteria: Criterion[];
 };
 
 export function ScoreMatrix({
+  decisionId,
   options,
   criteria,
 }: Props) {
@@ -43,8 +46,9 @@ export function ScoreMatrix({
   );
 
   const [scores, setScores] = useState(initialScores);
+  const router = useRouter();
 
-  async function handleChange(
+  function handleChange(
     optionId: string,
     criterionId: string,
     value: number
@@ -55,19 +59,39 @@ export function ScoreMatrix({
       ...prev,
       [key]: value,
     }));
+  }
 
+  async function saveScores() {
     try {
-      await fetch("/api/score", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          optionId,
-          criterionId,
-          value,
-        }),
-      });
+      const payload = Object.entries(scores).map(
+        ([key, value]) => {
+          const [optionId, criterionId] =
+            key.split("-");
+
+          return {
+            optionId,
+            criterionId,
+            value,
+          };
+        }
+      );
+
+      const res = await fetch(
+        `/api/decision/${decisionId}/scores`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to save scores");
+      }
+
+      router.refresh();
     } catch (error) {
       console.error(error);
     }
@@ -129,6 +153,13 @@ export function ScoreMatrix({
           ))}
         </tbody>
       </table>
+
+      <button
+        onClick={saveScores}
+        className="mt-4 rounded-lg border px-4 py-2 transition hover:bg-gray-100"
+      >
+        Save Scores
+      </button>
     </div>
   );
 }
