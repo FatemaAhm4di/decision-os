@@ -92,6 +92,7 @@ export function ScoreMatrix({
       }
 
       router.refresh();
+      
     } catch (error) {
       console.error(error);
     }

@@ -67,6 +67,7 @@ export async function GET() {
         createdAt: "desc",
       },
     });
+    
 
     return NextResponse.json(decisions);
   } catch (error) {

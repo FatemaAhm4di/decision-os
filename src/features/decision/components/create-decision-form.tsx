@@ -8,10 +8,6 @@ type DecisionResponse = {
   createdAt: string;
 };
 
-type Props = {
-  onCreated?: () => void;
-};
-
 type Option = {
   id: string;
   name: string;
@@ -23,25 +19,52 @@ type Criterion = {
   weight: number;
 };
 
-export function CreateDecisionForm({ onCreated }: Props) {
-  const [title, setTitle] = useState("");
+type Props = {
+  onCreated?: () => void;
 
-  const [options, setOptions] = useState<Option[]>([
-    {
-      id: crypto.randomUUID(),
-      name: "",
-    },
-  ]);
+  initialTitle?: string;
 
-  const [criteria, setCriteria] = useState<Criterion[]>([
-    {
-      id: crypto.randomUUID(),
-      name: "",
-      weight: 1,
-    },
-  ]);
+  initialOptions?: Option[];
 
-  const [response, setResponse] = useState<DecisionResponse | null>(null);
+  initialCriteria?: Criterion[];
+
+  mode?: "create" | "edit";
+
+  decisionId?: string;
+};
+
+export function CreateDecisionForm({
+  onCreated,
+  initialTitle = "",
+  initialOptions,
+  initialCriteria,
+  mode = "create",
+  decisionId,
+}: Props) {
+  const [title, setTitle] = useState(initialTitle);
+
+  const [options, setOptions] = useState<Option[]>(
+    initialOptions ?? [
+      {
+        id: crypto.randomUUID(),
+        name: "",
+      },
+    ]
+  );
+
+  const [criteria, setCriteria] = useState<Criterion[]>(
+    initialCriteria ?? [
+      {
+        id: crypto.randomUUID(),
+        name: "",
+        weight: 1,
+      },
+    ]
+  );
+
+  const [response, setResponse] =
+    useState<DecisionResponse | null>(null);
+
   const [isLoading, setIsLoading] = useState(false);
 
   function addOption() {
@@ -63,7 +86,12 @@ export function CreateDecisionForm({ onCreated }: Props) {
   function updateOption(id: string, name: string) {
     setOptions((prev) =>
       prev.map((option) =>
-        option.id === id ? { ...option, name } : option
+        option.id === id
+          ? {
+              ...option,
+              name,
+            }
+          : option
       )
     );
   }
@@ -81,7 +109,9 @@ export function CreateDecisionForm({ onCreated }: Props) {
 
   function removeCriterion(id: string) {
     setCriteria((prev) =>
-      prev.filter((criterion) => criterion.id !== id)
+      prev.filter(
+        (criterion) => criterion.id !== id
+      )
     );
   }
 
@@ -102,7 +132,9 @@ export function CreateDecisionForm({ onCreated }: Props) {
     );
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
     e.preventDefault();
 
     if (!title.trim()) return;
@@ -110,8 +142,16 @@ export function CreateDecisionForm({ onCreated }: Props) {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/decision", {
-        method: "POST",
+      const url =
+        mode === "edit"
+          ? `/api/decision/${decisionId}`
+          : "/api/decision";
+
+      const method =
+        mode === "edit" ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -122,26 +162,29 @@ export function CreateDecisionForm({ onCreated }: Props) {
         }),
       });
 
-      const data: DecisionResponse = await res.json();
+      const data: DecisionResponse =
+        await res.json();
 
       setResponse(data);
 
-      setTitle("");
+      if (mode === "create") {
+        setTitle("");
 
-      setOptions([
-        {
-          id: crypto.randomUUID(),
-          name: "",
-        },
-      ]);
+        setOptions([
+          {
+            id: crypto.randomUUID(),
+            name: "",
+          },
+        ]);
 
-      setCriteria([
-        {
-          id: crypto.randomUUID(),
-          name: "",
-          weight: 1,
-        },
-      ]);
+        setCriteria([
+          {
+            id: crypto.randomUUID(),
+            name: "",
+            weight: 1,
+          },
+        ]);
+      }
 
       onCreated?.();
     } catch (error) {
@@ -153,17 +196,24 @@ export function CreateDecisionForm({ onCreated }: Props) {
 
   return (
     <div className="mt-8">
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6"
+      >
         <input
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) =>
+            setTitle(e.target.value)
+          }
           placeholder="Enter decision title"
           className="w-full rounded-lg border px-4 py-2"
         />
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium">Options</h3>
+            <h3 className="font-medium">
+              Options
+            </h3>
 
             <button
               type="button"
@@ -175,11 +225,17 @@ export function CreateDecisionForm({ onCreated }: Props) {
           </div>
 
           {options.map((option) => (
-            <div key={option.id} className="flex gap-2">
+            <div
+              key={option.id}
+              className="flex gap-2"
+            >
               <input
                 value={option.name}
                 onChange={(e) =>
-                  updateOption(option.id, e.target.value)
+                  updateOption(
+                    option.id,
+                    e.target.value
+                  )
                 }
                 placeholder="Option name"
                 className="flex-1 rounded-lg border px-4 py-2"
@@ -187,7 +243,9 @@ export function CreateDecisionForm({ onCreated }: Props) {
 
               <button
                 type="button"
-                onClick={() => removeOption(option.id)}
+                onClick={() =>
+                  removeOption(option.id)
+                }
                 className="rounded-lg border px-3"
               >
                 ×
@@ -198,7 +256,9 @@ export function CreateDecisionForm({ onCreated }: Props) {
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium">Criteria</h3>
+            <h3 className="font-medium">
+              Criteria
+            </h3>
 
             <button
               type="button"
@@ -210,7 +270,10 @@ export function CreateDecisionForm({ onCreated }: Props) {
           </div>
 
           {criteria.map((criterion) => (
-            <div key={criterion.id} className="flex gap-2">
+            <div
+              key={criterion.id}
+              className="flex gap-2"
+            >
               <input
                 value={criterion.name}
                 onChange={(e) =>
@@ -242,7 +305,11 @@ export function CreateDecisionForm({ onCreated }: Props) {
 
               <button
                 type="button"
-                onClick={() => removeCriterion(criterion.id)}
+                onClick={() =>
+                  removeCriterion(
+                    criterion.id
+                  )
+                }
                 className="rounded-lg border px-3"
               >
                 ×
@@ -256,7 +323,13 @@ export function CreateDecisionForm({ onCreated }: Props) {
           disabled={isLoading}
           className="rounded-lg border px-4 py-2"
         >
-          {isLoading ? "Creating..." : "Create Decision"}
+          {isLoading
+            ? mode === "edit"
+              ? "Saving..."
+              : "Creating..."
+            : mode === "edit"
+            ? "Save Changes"
+            : "Create Decision"}
         </button>
       </form>
 

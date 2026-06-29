@@ -19,13 +19,13 @@ export async function GET(
         id,
       },
       include: {
-  options: {
-    include: {
-      scores: true,
-    },
-  },
-  criteria: true,
-},
+        options: {
+          include: {
+            scores: true,
+          },
+        },
+        criteria: true,
+      },
     });
 
     if (!decision) {
@@ -42,6 +42,40 @@ export async function GET(
     return NextResponse.json(
       { message: "Failed to fetch decision" },
       { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: Request,
+  { params }: Props
+) {
+  try {
+    const { id } = await params;
+
+    const body = await request.json();
+
+    const updatedDecision =
+      await prisma.decision.update({
+        where: {
+          id,
+        },
+        data: {
+          title: body.title,
+        },
+      });
+
+    return NextResponse.json(updatedDecision);
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      {
+        message: "Failed to update decision",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
