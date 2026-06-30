@@ -1,3 +1,5 @@
+import { CreateDecisionForm } from "@/features/decision/components/CreateDecisionForm";
+
 type Score = {
   id: string;
   value: number;
@@ -48,51 +50,18 @@ export default async function EditDecisionPage({
   const decision: Decision = await res.json();
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
-      <h1 className="text-3xl font-bold">
+    <div className="mx-auto max-w-3xl p-6">
+      <h1 className="mb-6 text-3xl font-bold">
         Edit Decision
       </h1>
 
-      <div className="rounded-lg border p-4">
-        <p>
-          <strong>Title:</strong>{" "}
-          {decision.title}
-        </p>
-      </div>
-
-      <div>
-        <h2 className="mb-2 text-xl font-semibold">
-          Options
-        </h2>
-
-        <ul className="space-y-2">
-          {decision.options.map((option) => (
-            <li
-              key={option.id}
-              className="rounded border p-3"
-            >
-              {option.name}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div>
-        <h2 className="mb-2 text-xl font-semibold">
-          Criteria
-        </h2>
-
-        <ul className="space-y-2">
-          {decision.criteria.map((criterion) => (
-            <li
-              key={criterion.id}
-              className="rounded border p-3"
-            >
-              {criterion.name} ({criterion.weight})
-            </li>
-          ))}
-        </ul>
-      </div>
+      <CreateDecisionForm
+        mode="edit"
+        decisionId={decision.id}
+        initialTitle={decision.title}
+        initialOptions={decision.options}
+        initialCriteria={decision.criteria}
+      />
     </div>
   );
 }
