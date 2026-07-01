@@ -1,4 +1,4 @@
-import { CreateDecisionForm } from "@/features/decision/components/CreateDecisionForm";
+import { CreateDecisionForm } from "@/features/decision/components/create-decision-form";
 
 type Score = {
   id: string;
