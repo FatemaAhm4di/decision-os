@@ -2,12 +2,6 @@
 
 import { useState } from "react";
 
-type DecisionResponse = {
-  id: string;
-  title: string;
-  createdAt: string;
-};
-
 type Option = {
   id: string;
   name: string;
@@ -21,15 +15,10 @@ type Criterion = {
 
 type Props = {
   onCreated?: () => void;
-
   initialTitle?: string;
-
   initialOptions?: Option[];
-
   initialCriteria?: Criterion[];
-
   mode?: "create" | "edit";
-
   decisionId?: string;
 };
 
@@ -61,9 +50,6 @@ export function CreateDecisionForm({
       },
     ]
   );
-
-  const [response, setResponse] =
-    useState<DecisionResponse | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -137,7 +123,28 @@ export function CreateDecisionForm({
   ) {
     e.preventDefault();
 
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      alert("Please enter a title.");
+      return;
+    }
+
+    if (
+      options.every(
+        (option) => !option.name.trim()
+      )
+    ) {
+      alert("Add at least one option.");
+      return;
+    }
+
+    if (
+      criteria.every(
+        (criterion) => !criterion.name.trim()
+      )
+    ) {
+      alert("Add at least one criterion.");
+      return;
+    }
 
     setIsLoading(true);
 
@@ -162,10 +169,11 @@ export function CreateDecisionForm({
         }),
       });
 
-      const data: DecisionResponse =
-        await res.json();
+      if (!res.ok) {
+        throw new Error("Request failed");
+      }
 
-      setResponse(data);
+      await res.json();
 
       if (mode === "create") {
         setTitle("");
@@ -189,6 +197,7 @@ export function CreateDecisionForm({
       onCreated?.();
     } catch (error) {
       console.error(error);
+      alert("Something went wrong.");
     } finally {
       setIsLoading(false);
     }
@@ -332,12 +341,6 @@ export function CreateDecisionForm({
             : "Create Decision"}
         </button>
       </form>
-
-      {response && (
-        <pre className="mt-6 overflow-auto rounded-lg border p-4 text-sm">
-          {JSON.stringify(response, null, 2)}
-        </pre>
-      )}
     </div>
   );
 }
