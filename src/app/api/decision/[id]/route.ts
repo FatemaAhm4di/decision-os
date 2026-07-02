@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { updateDecision } from "@/lib/decision/update-decision";
 
 type Props = {
   params: Promise<{
@@ -55,17 +56,12 @@ export async function PUT(
 
     const body = await request.json();
 
-    const updatedDecision =
-      await prisma.decision.update({
-        where: {
-          id,
-        },
-        data: {
-          title: body.title,
-        },
-      });
+    const decision = await updateDecision(
+      id,
+      body
+    );
 
-    return NextResponse.json(updatedDecision);
+    return NextResponse.json(decision);
   } catch (error) {
     console.error(error);
 
