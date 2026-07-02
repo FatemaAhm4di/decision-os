@@ -27,26 +27,55 @@ export async function updateDecision(
         where: {
           id: decisionId,
         },
-      });
-
-    if (!existingDecision) {
-      throw new Error("Decision not found");
-    }
-
-    const updatedDecision =
-      await tx.decision.update({
-        where: {
-          id: decisionId,
-        },
-        data: {
-          title: data.title,
-        },
         include: {
           options: true,
           criteria: true,
         },
       });
 
-    return updatedDecision;
+    if (!existingDecision) {
+      throw new Error("Decision not found");
+    }
+
+    await tx.decision.update({
+      where: {
+        id: decisionId,
+      },
+      data: {
+        title: data.title,
+      },
+    });
+
+    // Update existing options
+    for (const option of data.options) {
+      const exists = existingDecision.options.find(
+        (item) => item.id === option.id
+      );
+
+      if (exists) {
+        await tx.option.update({
+          where: {
+            id: option.id,
+          },
+          data: {
+            name: option.name,
+          },
+        });
+      }
+    }
+
+    return tx.decision.findUnique({
+      where: {
+        id: decisionId,
+      },
+      include: {
+        options: {
+          include: {
+            scores: true,
+          },
+        },
+        criteria: true,
+      },
+    });
   });
 }
