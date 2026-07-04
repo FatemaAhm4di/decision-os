@@ -127,6 +127,17 @@ export function CreateDecisionForm({
       alert("Please enter a title.");
       return;
     }
+    const totalWeight = criteria.reduce(
+  (sum, criterion) => sum + criterion.weight,
+  0
+);
+
+if (Math.abs(totalWeight - 1) > 0.001) {
+  alert(
+    `Criteria weights must equal 1.\nCurrent total: ${totalWeight}`
+  );
+  return;
+}
 
     if (
       options.every(
