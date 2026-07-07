@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { validateCriteriaWeights } from "@/lib/validation/decision";
 
 type OptionInput = {
   id: string;
@@ -21,6 +22,9 @@ export async function updateDecision(
   decisionId: string,
   data: UpdateDecisionInput
 ) {
+
+  validateCriteriaWeights(data.criteria);
+  
   return prisma.$transaction(async (tx) => {
     const existingDecision =
       await tx.decision.findUnique({
