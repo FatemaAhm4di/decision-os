@@ -5,6 +5,14 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/Card";
+
 type Option = {
   id: string;
   name: string;
@@ -218,7 +226,22 @@ if (Math.abs(totalWeight - 1) > 0.001) {
   }
 
   return (
-    <div className="mt-8">
+  <Card className="mt-8">
+    <CardHeader>
+      <CardTitle>
+        {mode === "edit"
+          ? "Edit Decision"
+          : "Create New Decision"}
+      </CardTitle>
+
+      <CardDescription>
+        {mode === "edit"
+          ? "Update your decision details."
+          : "Add options and criteria to compare your choices."}
+      </CardDescription>
+    </CardHeader>
+
+    <CardContent>
       <form
         onSubmit={handleSubmit}
         className="space-y-6"
@@ -363,6 +386,7 @@ if (Math.abs(totalWeight - 1) > 0.001) {
             : "Create Decision"}
         </button>
       </form>
-    </div>
+    </CardContent>
+  </Card>
   );
 }
