@@ -41,8 +41,12 @@ export async function GET(
     console.error(error);
 
     return NextResponse.json(
-      { message: "Failed to fetch decision" },
-      { status: 500 }
+      {
+        message: "Failed to fetch decision",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
@@ -68,6 +72,36 @@ export async function PUT(
     return NextResponse.json(
       {
         message: "Failed to update decision",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: Props
+) {
+  try {
+    const { id } = await params;
+
+    await prisma.decision.delete({
+      where: {
+        id,
+      },
+    });
+
+    return NextResponse.json({
+      message: "Decision deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      {
+        message: "Failed to delete decision",
       },
       {
         status: 500,
