@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/label";
 
 type Option = {
   id: string;
@@ -220,14 +223,20 @@ if (Math.abs(totalWeight - 1) > 0.001) {
         onSubmit={handleSubmit}
         className="space-y-6"
       >
-        <input
-          value={title}
-          onChange={(e) =>
-            setTitle(e.target.value)
-          }
-          placeholder="Enter decision title"
-          className="w-full rounded-lg border px-4 py-2"
-        />
+        <div className="space-y-2">
+  <Label htmlFor="title">
+    Decision Title
+  </Label>
+
+  <Input
+    id="title"
+    value={title}
+    onChange={(e) =>
+      setTitle(e.target.value)
+    }
+    placeholder="Enter decision title"
+  />
+</div>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -235,13 +244,14 @@ if (Math.abs(totalWeight - 1) > 0.001) {
               Options
             </h3>
 
-            <button
-              type="button"
-              onClick={addOption}
-              className="rounded-lg border px-3 py-1 text-sm"
-            >
-              Add Option
-            </button>
+            <Button
+  type="button"
+  variant="outline"
+  size="sm"
+  onClick={addOption}
+>
+  Add Option
+</Button>
           </div>
 
           {options.map((option) => (
@@ -249,27 +259,27 @@ if (Math.abs(totalWeight - 1) > 0.001) {
               key={option.id}
               className="flex gap-2"
             >
-              <input
-                value={option.name}
-                onChange={(e) =>
-                  updateOption(
-                    option.id,
-                    e.target.value
-                  )
-                }
-                placeholder="Option name"
-                className="flex-1 rounded-lg border px-4 py-2"
-              />
+              <Input
+  value={option.name}
+  onChange={(e) =>
+    updateOption(
+      option.id,
+      e.target.value
+    )
+  }
+  placeholder="Option name"
+/>
 
-              <button
-                type="button"
-                onClick={() =>
-                  removeOption(option.id)
-                }
-                className="rounded-lg border px-3"
-              >
-                ×
-              </button>
+              <Button
+  type="button"
+  variant="destructive"
+  size="icon"
+  onClick={() =>
+    removeOption(option.id)
+  }
+>
+  ×
+</Button>
             </div>
           ))}
         </div>
@@ -280,13 +290,14 @@ if (Math.abs(totalWeight - 1) > 0.001) {
               Criteria
             </h3>
 
-            <button
-              type="button"
-              onClick={addCriterion}
-              className="rounded-lg border px-3 py-1 text-sm"
-            >
-              Add Criterion
-            </button>
+            <Button
+  type="button"
+  variant="outline"
+  size="sm"
+  onClick={addCriterion}
+>
+  Add Criterion
+</Button>
           </div>
 
           {criteria.map((criterion) => (
@@ -294,46 +305,46 @@ if (Math.abs(totalWeight - 1) > 0.001) {
               key={criterion.id}
               className="flex gap-2"
             >
-              <input
-                value={criterion.name}
-                onChange={(e) =>
-                  updateCriterion(
-                    criterion.id,
-                    "name",
-                    e.target.value
-                  )
-                }
-                placeholder="Criterion name"
-                className="flex-1 rounded-lg border px-4 py-2"
-              />
+              <Input
+  value={criterion.name}
+  onChange={(e) =>
+    updateCriterion(
+      criterion.id,
+      "name",
+      e.target.value
+    )
+  }
+  placeholder="Criterion name"
+/>
 
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                max="1"
-                value={criterion.weight}
-                onChange={(e) =>
-                  updateCriterion(
-                    criterion.id,
-                    "weight",
-                    Number(e.target.value)
-                  )
-                }
-                className="w-24 rounded-lg border px-4 py-2"
-              />
+              <Input
+  type="number"
+  step="0.1"
+  min="0"
+  max="1"
+  value={criterion.weight}
+  onChange={(e) =>
+    updateCriterion(
+      criterion.id,
+      "weight",
+      Number(e.target.value)
+    )
+  }
+  className="w-24"
+/>
 
-              <button
-                type="button"
-                onClick={() =>
-                  removeCriterion(
-                    criterion.id
-                  )
-                }
-                className="rounded-lg border px-3"
-              >
-                ×
-              </button>
+              <Button
+  type="button"
+  variant="destructive"
+  size="icon"
+  onClick={() =>
+    removeCriterion(
+      criterion.id
+    )
+  }
+>
+  ×
+</Button>
             </div>
           ))}
         </div>
