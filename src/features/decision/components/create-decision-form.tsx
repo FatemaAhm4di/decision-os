@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
 
+import { Separator } from "@/components/ui/separator";
+
 import {
   Card,
   CardContent,
@@ -12,6 +14,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
+
+import {
+  FolderKanban,
+  ListTodo,
+  SlidersHorizontal,
+} from "lucide-react";
 
 type Option = {
   id: string;
@@ -227,19 +235,29 @@ if (Math.abs(totalWeight - 1) > 0.001) {
 
   return (
   <Card className="mt-8">
-    <CardHeader>
-      <CardTitle>
+    <CardHeader className="space-y-4">
+  <div className="flex items-center gap-3">
+    <div className="rounded-lg bg-primary/10 p-2">
+      <FolderKanban className="size-5 text-primary" />
+    </div>
+
+    <div>
+      <CardTitle className="text-2xl">
         {mode === "edit"
           ? "Edit Decision"
           : "Create New Decision"}
       </CardTitle>
 
-      <CardDescription>
+      <CardDescription className="mt-1">
         {mode === "edit"
-          ? "Update your decision details."
-          : "Add options and criteria to compare your choices."}
+          ? "Update your decision."
+          : "Compare options using weighted criteria."}
       </CardDescription>
-    </CardHeader>
+    </div>
+  </div>
+
+  <Separator />
+</CardHeader>
 
     <CardContent>
       <form
@@ -263,19 +281,24 @@ if (Math.abs(totalWeight - 1) > 0.001) {
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium">
-              Options
-            </h3>
+  <div className="flex items-center gap-2">
+    <ListTodo className="size-5 text-primary" />
 
-            <Button
-  type="button"
-  variant="outline"
-  size="sm"
-  onClick={addOption}
->
-  Add Option
-</Button>
-          </div>
+    <h3 className="text-lg font-semibold">
+      Options
+    </h3>
+  </div>
+
+  <Button
+    type="button"
+    variant="outline"
+    size="sm"
+    onClick={addOption}
+  >
+    Add Option
+  </Button>
+</div>
+
 
           {options.map((option) => (
             <div
@@ -307,21 +330,27 @@ if (Math.abs(totalWeight - 1) > 0.001) {
           ))}
         </div>
 
+        <Separator className="my-6" />
+
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium">
-              Criteria
-            </h3>
+  <div className="flex items-center gap-2">
+    <SlidersHorizontal className="size-5 text-primary" />
 
-            <Button
-  type="button"
-  variant="outline"
-  size="sm"
-  onClick={addCriterion}
->
-  Add Criterion
-</Button>
-          </div>
+    <h3 className="text-lg font-semibold">
+      Criteria
+    </h3>
+  </div>
+
+  <Button
+    type="button"
+    variant="outline"
+    size="sm"
+    onClick={addCriterion}
+  >
+    Add Criterion
+  </Button>
+</div>
 
           {criteria.map((criterion) => (
             <div
