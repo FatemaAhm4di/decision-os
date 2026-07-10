@@ -15,6 +15,7 @@ import {
 
 import { Button } from "@/components/ui/Button";
 import { Decision } from "@/types/decision";
+import { DeleteDecisionButton } from "./delete-decision-button";
 
 type DecisionCardProps = {
   decision: Decision;
@@ -82,15 +83,19 @@ export function DecisionCard({
           </div>
         </div>
 
-        <div className="flex justify-end">
-          <Link
-            href={`/decision/${decision.id}`}
-          >
-            <Button>
-              Open Decision
-            </Button>
-          </Link>
-        </div>
+        <div className="flex justify-end gap-2">
+  <Link
+    href={`/decision/${decision.id}`}
+  >
+    <Button variant="outline">
+      Open
+    </Button>
+  </Link>
+
+  <DeleteDecisionButton
+    decisionId={decision.id}
+  />
+</div>
       </CardContent>
     </Card>
   );
