@@ -1,32 +1,54 @@
 "use client";
 
 import { useDecisions } from "../hooks/use-decisions";
+
 import { DecisionCard } from "./decision-card";
-import { CreateDecisionForm } from "./create-decision-form";
+import { CreateDecisionDialog } from "./create-decision-dialog";
 
 export function DecisionList() {
-  const { decisions, isLoading, refetch } = useDecisions();
+  const {
+    decisions,
+    isLoading,
+    refetch,
+  } = useDecisions();
 
   if (isLoading) {
-    return <p className="mt-8">Loading...</p>;
-  }
-
-  if (decisions.length === 0) {
     return (
-      <div>
-        <CreateDecisionForm onCreated={refetch} />
-        <p className="mt-8">No decisions yet.</p>
-      </div>
+      <p className="mt-8">
+        Loading...
+      </p>
     );
   }
 
   return (
-    <div className="mt-8 space-y-4">
-      <CreateDecisionForm onCreated={refetch} />
+    <div className="space-y-8">
+      <div className="flex items-center justify-end">
+        <CreateDecisionDialog
+          onCreated={refetch}
+        />
+      </div>
 
-      {decisions.map((decision) => (
-        <DecisionCard key={decision.id} decision={decision} />
-      ))}
+      {decisions.length === 0 ? (
+        <div className="rounded-xl border border-dashed p-12 text-center">
+          <h3 className="text-xl font-semibold">
+            No decisions yet
+          </h3>
+
+          <p className="mt-2 text-muted-foreground">
+            Create your first decision
+            to get started.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {decisions.map((decision) => (
+            <DecisionCard
+              key={decision.id}
+              decision={decision}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
