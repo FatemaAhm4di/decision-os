@@ -1,17 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 type Props = {
   decisionId: string;
@@ -20,38 +9,41 @@ type Props = {
 export function DeleteDecisionButton({
   decisionId,
 }: Props) {
+  async function handleDelete() {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this decision?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(
+        `/api/decision/${decisionId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error(
+          "Failed to delete decision"
+        );
+      }
+
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+
+      alert("Something went wrong.");
+    }
+  }
+
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-  <Button variant="destructive">
-    Delete
-  </Button>
-</AlertDialogTrigger>
-
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
-            Delete this decision?
-          </AlertDialogTitle>
-
-          <AlertDialogDescription>
-            This action cannot be undone.
-            The decision and all related
-            options, criteria and scores
-            will be permanently deleted.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <AlertDialogFooter>
-          <AlertDialogCancel>
-            Cancel
-          </AlertDialogCancel>
-
-          <AlertDialogAction>
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <Button
+      variant="destructive"
+      onClick={handleDelete}
+    >
+      Delete
+    </Button>
   );
 }

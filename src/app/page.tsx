@@ -1,17 +1,27 @@
-import { CreateDecisionForm } from "@/features/decision/components/create-decision-form";
 import { DecisionList } from "@/features/decision/components/decision-list";
 
 export default function Home() {
   return (
-    <main className="mx-auto max-w-4xl p-8">
-      <h1 className="text-4xl font-bold">Decision OS</h1>
+    <main className="mx-auto max-w-6xl px-6 py-12">
+      <section className="space-y-4">
+        <span className="rounded-full border px-3 py-1 text-sm font-medium">
+          Decision OS
+        </span>
 
-      <p className="mt-2 text-gray-500">
-        Make better decisions with weighted analysis.
-      </p>
+        <h1 className="max-w-3xl text-5xl font-bold tracking-tight">
+          Make smarter decisions with confidence.
+        </h1>
 
-<CreateDecisionForm />
+        <p className="max-w-2xl text-lg text-muted-foreground">
+          Compare options, assign weighted criteria,
+          and make better decisions using a structured
+          decision matrix.
+        </p>
+      </section>
 
-<DecisionList />    </main>
+      <section className="mt-12">
+        <DecisionList />
+      </section>
+    </main>
   );
 }
