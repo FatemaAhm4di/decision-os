@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 
-import { Button } from "@/components/ui/Button";
-
 import {
   Dialog,
   DialogContent,
@@ -30,9 +28,7 @@ export function CreateDecisionDialog({
       onOpenChange={setOpen}
     >
       <DialogTrigger>
-        <Button>
-          + New Decision
-        </Button>
+        + New Decision
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-3xl">
@@ -42,9 +38,7 @@ export function CreateDecisionDialog({
           </DialogTitle>
 
           <DialogDescription>
-            Add a new decision with
-            options and weighted
-            criteria.
+            Add a new decision with options and weighted criteria.
           </DialogDescription>
         </DialogHeader>
 
