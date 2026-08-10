@@ -36,6 +36,8 @@ type Props = {
   criteria: Criterion[];
 };
 
+type ScoreMap = Record<string, number>;
+
 export function ScoreMatrix({
   decisionId,
   options,
@@ -43,8 +45,8 @@ export function ScoreMatrix({
 }: Props) {
   const router = useRouter();
 
-  const initialScores = useMemo(() => {
-    const result: Record<string, number> = {};
+  const initialScores = useMemo<ScoreMap>(() => {
+    const result: ScoreMap = {};
 
     options.forEach((option) => {
       option.scores.forEach((score) => {
@@ -57,7 +59,7 @@ export function ScoreMatrix({
   }, [options]);
 
   const [scores, setScores] =
-    useState<Record<string, number>>(initialScores);
+    useState<ScoreMap>(initialScores);
 
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -73,7 +75,9 @@ export function ScoreMatrix({
     if (value === "") {
       setScores((prev) => {
         const next = { ...prev };
+
         delete next[key];
+
         return next;
       });
 
@@ -135,7 +139,7 @@ export function ScoreMatrix({
           )
       );
 
-      const res = await fetch(
+      const response = await fetch(
         `/api/decision/${decisionId}/scores`,
         {
           method: "POST",
@@ -146,11 +150,12 @@ export function ScoreMatrix({
         }
       );
 
-      if (!res.ok) {
+      if (!response.ok) {
         throw new Error("Failed to save scores");
       }
 
       setIsSaved(true);
+
       router.refresh();
     } catch (error) {
       console.error(error);
@@ -163,7 +168,10 @@ export function ScoreMatrix({
     }
   }
 
-  if (options.length === 0 || criteria.length === 0) {
+  if (
+    options.length === 0 ||
+    criteria.length === 0
+  ) {
     return (
       <div className="rounded-2xl border border-dashed bg-muted/20 p-8 text-center">
         <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary/10">
@@ -184,12 +192,12 @@ export function ScoreMatrix({
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border bg-muted/20">
+      <div className="overflow-hidden rounded-2xl border">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse">
-            <thead>
-              <tr className="border-b bg-muted/40">
-                <th className="sticky left-0 z-10 min-w-[180px] border-r bg-muted/40 px-4 py-4 text-left text-sm font-semibold">
+          <table className="w-full min-w-[720px] border-collapse text-sm">
+            <thead className="bg-muted/40">
+              <tr className="border-b">
+                <th className="sticky left-0 z-10 min-w-[180px] border-r bg-muted/40 px-4 py-4 text-left font-semibold">
                   Option
                 </th>
 
@@ -199,7 +207,7 @@ export function ScoreMatrix({
                     className="min-w-[150px] px-4 py-4 text-left"
                   >
                     <div className="space-y-1">
-                      <p className="text-sm font-semibold">
+                      <p className="font-semibold">
                         {criterion.name}
                       </p>
 
@@ -274,7 +282,7 @@ export function ScoreMatrix({
           )}
 
           {isSaved && !error && (
-            <p className="flex items-center gap-1.5 text-sm text-primary">
+            <p className="flex items-center gap-1.5 text-primary">
               <Check className="size-4" />
               Scores saved successfully.
             </p>

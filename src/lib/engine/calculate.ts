@@ -19,37 +19,53 @@ type Decision = {
   criteria: Criterion[];
 };
 
+export type DecisionResult = {
+  optionId: string;
+  name: string;
+  score: number;
+};
+
 export function calculateDecision(
   decision: Decision
-) {
-  // const totalWeight = decision.criteria.reduce(
-  //   (sum, criterion) => sum + criterion.weight,
-  //   0
-  // );
+): DecisionResult[] {
+  const totalWeight = decision.criteria.reduce(
+    (sum, criterion) => sum + criterion.weight,
+    0
+  );
 
-  // if (Math.abs(totalWeight - 1) > 0.001) {
-  //   throw new Error(
-  //     `Criteria weights must sum to 1. Current total: ${totalWeight}`
-  //   );
-  // }
+  if (totalWeight <= 0) {
+    return decision.options.map((option) => ({
+      optionId: option.id,
+      name: option.name,
+      score: 0,
+    }));
+  }
+
+  const criteriaMap = new Map(
+    decision.criteria.map((criterion) => [
+      criterion.id,
+      criterion,
+    ])
+  );
 
   return decision.options
     .map((option) => {
       const score = option.scores.reduce(
-        (sum, currentScore) => {
-          const criterion =
-            decision.criteria.find(
-              (item) =>
-                item.id === currentScore.criterionId
-            );
+        (total, currentScore) => {
+          const criterion = criteriaMap.get(
+            currentScore.criterionId
+          );
 
           if (!criterion) {
-            return sum;
+            return total;
           }
 
+          const normalizedWeight =
+            criterion.weight / totalWeight;
+
           return (
-            sum +
-            currentScore.value * criterion.weight
+            total +
+            currentScore.value * normalizedWeight
           );
         },
         0
