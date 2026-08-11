@@ -25,9 +25,7 @@ export async function POST(
         {
           message: "Decision ID is required",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -38,9 +36,7 @@ export async function POST(
         {
           message: "Scores must be an array",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -64,9 +60,7 @@ export async function POST(
           message:
             "Each score must include valid optionId, criterionId and a value between 0 and 10",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -93,9 +87,7 @@ export async function POST(
         {
           message: "Decision not found",
         },
-        {
-          status: 404,
-        }
+        { status: 404 }
       );
     }
 
@@ -119,9 +111,7 @@ export async function POST(
           message:
             "One or more options or criteria do not belong to this decision",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -135,6 +125,7 @@ export async function POST(
       }
 
       uniqueKeys.add(key);
+
       return false;
     });
 
@@ -144,40 +135,39 @@ export async function POST(
           message:
             "Duplicate option and criterion combinations are not allowed",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
-    await prisma.$transaction(
-      scores.map((score) =>
-        prisma.score.upsert({
-          where: {
-            optionId_criterionId: {
-              optionId: score.optionId,
-              criterionId: score.criterionId,
-            },
+    await prisma.$transaction(async (tx) => {
+      await tx.score.deleteMany({
+        where: {
+          option: {
+            decisionId,
           },
-          update: {
-            value: score.value,
-          },
-          create: {
-            value: score.value,
-            optionId: score.optionId,
-            criterionId: score.criterionId,
-          },
-        })
-      )
-    );
+        },
+      });
+
+      if (scores.length > 0) {
+        await Promise.all(
+          scores.map((score) =>
+            tx.score.create({
+              data: {
+                value: score.value,
+                optionId: score.optionId,
+                criterionId: score.criterionId,
+              },
+            })
+          )
+        );
+      }
+    });
 
     return NextResponse.json(
       {
         message: "Scores saved successfully",
       },
-      {
-        status: 200,
-      }
+      { status: 200 }
     );
   } catch (error) {
     console.error("Failed to save scores:", error);
@@ -186,9 +176,7 @@ export async function POST(
       {
         message: "Failed to save scores",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
