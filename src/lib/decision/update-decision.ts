@@ -2,12 +2,12 @@ import { prisma } from "@/lib/prisma";
 import { validateCriteriaWeights } from "@/lib/validation/decision";
 
 type OptionInput = {
-  id: string;
+  id?: string;
   name: string;
 };
 
 type CriterionInput = {
-  id: string;
+  id?: string;
   name: string;
   weight: number;
 };
@@ -22,9 +22,36 @@ export async function updateDecision(
   decisionId: string,
   data: UpdateDecisionInput
 ) {
+  const title = data.title?.trim();
 
-  validateCriteriaWeights(data.criteria);
-  
+  if (!title) {
+    throw new Error("Decision title is required");
+  }
+
+  const options = data.options
+    .map((option) => ({
+      ...option,
+      name: option.name.trim(),
+    }))
+    .filter((option) => option.name.length > 0);
+
+  const criteria = data.criteria
+    .map((criterion) => ({
+      ...criterion,
+      name: criterion.name.trim(),
+    }))
+    .filter((criterion) => criterion.name.length > 0);
+
+  if (options.length === 0) {
+    throw new Error("At least one option is required");
+  }
+
+  if (criteria.length === 0) {
+    throw new Error("At least one criterion is required");
+  }
+
+  validateCriteriaWeights(criteria);
+
   return prisma.$transaction(async (tx) => {
     const existingDecision =
       await tx.decision.findUnique({
@@ -46,17 +73,30 @@ export async function updateDecision(
         id: decisionId,
       },
       data: {
-        title: data.title,
+        title,
       },
     });
 
-    // Update existing options
-    for (const option of data.options) {
-      const exists = existingDecision.options.find(
-        (item) => item.id === option.id
-      );
+    const existingOptionIds = new Set(
+      existingDecision.options.map(
+        (option) => option.id
+      )
+    );
 
-      if (exists) {
+    const incomingOptionIds = new Set(
+      options
+        .map((option) => option.id)
+        .filter(
+          (id): id is string =>
+            typeof id === "string"
+        )
+    );
+
+    for (const option of options) {
+      if (
+        option.id &&
+        existingOptionIds.has(option.id)
+      ) {
         await tx.option.update({
           where: {
             id: option.id,
@@ -65,90 +105,99 @@ export async function updateDecision(
             name: option.name,
           },
         });
+      } else {
+        await tx.option.create({
+          data: {
+            name: option.name,
+            decisionId,
+          },
+        });
       }
     }
 
-    // Create new options
-for (const option of data.options) {
-  const exists = existingDecision.options.find(
-    (item) => item.id === option.id
-  );
+    const removedOptions =
+      existingDecision.options.filter(
+        (option) =>
+          !incomingOptionIds.has(option.id)
+      );
 
-  if (!exists && option.name.trim() !== "") {
-    await tx.option.create({
-      data: {
-        name: option.name,
-        decisionId,
-      },
-    });
-  }
-}
+    for (const option of removedOptions) {
+      await tx.score.deleteMany({
+        where: {
+          optionId: option.id,
+        },
+      });
 
-// Delete removed options
-for (const option of existingDecision.options) {
-  const stillExists = data.options.find(
-    (item) => item.id === option.id
-  );
+      await tx.option.delete({
+        where: {
+          id: option.id,
+        },
+      });
+    }
 
-  if (!stillExists) {
-    await tx.option.delete({
-      where: {
-        id: option.id,
-      },
-    });
-  }
-}
+    const existingCriterionIds = new Set(
+      existingDecision.criteria.map(
+        (criterion) => criterion.id
+      )
+    );
 
-// Update existing criteria
-for (const criterion of data.criteria) {
-  const exists = existingDecision.criteria.find(
-    (item) => item.id === criterion.id
-  );
+    const incomingCriterionIds = new Set(
+      criteria
+        .map((criterion) => criterion.id)
+        .filter(
+          (id): id is string =>
+            typeof id === "string"
+        )
+    );
 
-  if (exists) {
-    await tx.criterion.update({
-      where: {
-        id: criterion.id,
-      },
-      data: {
-        name: criterion.name,
-        weight: criterion.weight,
-      },
-    });
-  }
-}
+    for (const criterion of criteria) {
+      if (
+        criterion.id &&
+        existingCriterionIds.has(
+          criterion.id
+        )
+      ) {
+        await tx.criterion.update({
+          where: {
+            id: criterion.id,
+          },
+          data: {
+            name: criterion.name,
+            weight: criterion.weight,
+          },
+        });
+      } else {
+        await tx.criterion.create({
+          data: {
+            name: criterion.name,
+            weight: criterion.weight,
+            decisionId,
+          },
+        });
+      }
+    }
 
-// Create new criteria
-for (const criterion of data.criteria) {
-  const exists = existingDecision.criteria.find(
-    (item) => item.id === criterion.id
-  );
+    const removedCriteria =
+      existingDecision.criteria.filter(
+        (criterion) =>
+          !incomingCriterionIds.has(
+            criterion.id
+          )
+      );
 
-  if (!exists && criterion.name.trim() !== "") {
-    await tx.criterion.create({
-      data: {
-        name: criterion.name,
-        weight: criterion.weight,
-        decisionId,
-      },
-    });
-  }
-}
+    for (const criterion of removedCriteria) {
+      await tx.score.deleteMany({
+        where: {
+          criterionId: criterion.id,
+        },
+      });
 
-// Delete removed criteria
-for (const criterion of existingDecision.criteria) {
-  const stillExists = data.criteria.find(
-    (item) => item.id === criterion.id
-  );
-
-  if (!stillExists) {
-    await tx.criterion.delete({
-      where: {
-        id: criterion.id,
-      },
-    });
-  }
-}
+      await tx.criterion.delete({
+        where: {
+          id: criterion.id,
+        },
+      });
+    }
 
     return tx.decision.findUnique({
       where: {
