@@ -44,24 +44,53 @@ export default async function EditDecisionPage({
   );
 
   if (!res.ok) {
-    return <div>Decision not found.</div>;
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+        <div className="rounded-2xl border border-dashed p-8 text-center">
+          <h1 className="text-xl font-semibold">
+            Decision not found
+          </h1>
+
+          <p className="mt-2 text-sm text-muted-foreground">
+            The decision you are looking for does not exist
+            or may have been removed.
+          </p>
+        </div>
+      </main>
+    );
   }
 
   const decision: Decision = await res.json();
 
   return (
-    <div className="mx-auto max-w-3xl p-6">
-      <h1 className="mb-6 text-3xl font-bold">
-        Edit Decision
-      </h1>
+    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="mb-8">
+        <p className="text-sm font-medium text-primary">
+          Decision Management
+        </p>
+
+        <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
+          Edit Decision
+        </h1>
+
+        <p className="mt-2 text-sm text-muted-foreground">
+          Update the title, options, and weighted criteria
+          for this decision.
+        </p>
+      </div>
 
       <CreateDecisionForm
         mode="edit"
         decisionId={decision.id}
         initialTitle={decision.title}
-        initialOptions={decision.options}
+        initialOptions={decision.options.map(
+          ({ id, name }) => ({
+            id,
+            name,
+          })
+        )}
         initialCriteria={decision.criteria}
       />
-    </div>
+    </main>
   );
 }

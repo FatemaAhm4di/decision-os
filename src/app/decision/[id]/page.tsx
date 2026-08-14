@@ -4,6 +4,7 @@ import {
   CalendarDays,
   CheckCircle2,
   ListTodo,
+  Pencil,
   SlidersHorizontal,
   Trophy,
 } from "lucide-react";
@@ -106,48 +107,59 @@ export default async function DecisionPage({
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Back */}
-      <Link
-        href="/"
-        className="mb-8 inline-flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="mr-2 size-4 transition-transform duration-200 group-hover:-translate-x-1" />
-        Back to decisions
-      </Link>
+      {/* Navigation */}
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <Link
+          href="/"
+          className="group inline-flex w-fit items-center text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground"
+        >
+          <ArrowLeft className="mr-2 size-4 transition-transform duration-200 group-hover:-translate-x-1" />
+          Back to decisions
+        </Link>
+
+        <Link href={`/decision/${decision.id}/edit`}>
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
+            <Pencil className="mr-2 size-4" />
+            Edit Decision
+          </Button>
+        </Link>
+      </div>
 
       {/* Header */}
       <div className="mb-10">
         <div className="flex items-start gap-4">
-          <div className="rounded-xl bg-primary/10 p-3 ring-1 ring-primary/10">
+          <div className="shrink-0 rounded-xl bg-primary/10 p-3 ring-1 ring-primary/10 transition-transform duration-300 hover:scale-105">
             <CheckCircle2 className="size-6 text-primary" />
           </div>
 
           <div className="min-w-0 flex-1">
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            <h1 className="break-words text-3xl font-bold tracking-tight sm:text-4xl">
               {decision.title}
             </h1>
 
             <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-              <CalendarDays className="size-4" />
-
+              <CalendarDays className="size-4 shrink-0" />
               <span>Created {createdAt}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Recommended option */}
+      {/* Recommended Option */}
       {winner && (
-        <Card className="mb-8 overflow-hidden border-primary/20 bg-primary/[0.03]">
+        <Card className="mb-8 overflow-hidden border-primary/20 bg-primary/[0.03] transition-shadow duration-300 hover:shadow-lg">
           <CardContent className="p-6 sm:p-8">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-              <div>
+              <div className="min-w-0">
                 <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
-                  <Trophy className="size-4" />
+                  <Trophy className="size-4 shrink-0" />
                   Recommended option
                 </div>
 
-                <h2 className="text-2xl font-bold sm:text-3xl">
+                <h2 className="break-words text-2xl font-bold sm:text-3xl">
                   {winner.name}
                 </h2>
 
@@ -157,7 +169,7 @@ export default async function DecisionPage({
                 </p>
               </div>
 
-              <div className="rounded-xl border bg-background px-6 py-4 text-center shadow-sm">
+              <div className="shrink-0 rounded-xl border bg-background px-6 py-4 text-center shadow-sm">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Score
                 </p>
@@ -174,7 +186,7 @@ export default async function DecisionPage({
       {/* Options & Criteria */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Options */}
-        <Card>
+        <Card className="transition-shadow duration-300 hover:shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ListTodo className="size-5 text-primary" />
@@ -184,22 +196,28 @@ export default async function DecisionPage({
 
           <CardContent>
             <div className="space-y-3">
-              {decision.options.map((option) => (
-                <div
-                  key={option.id}
-                  className="rounded-xl border bg-muted/30 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted/50"
-                >
-                  <p className="font-medium">
-                    {option.name}
-                  </p>
-                </div>
-              ))}
+              {decision.options.length > 0 ? (
+                decision.options.map((option) => (
+                  <div
+                    key={option.id}
+                    className="rounded-xl border bg-muted/30 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted/50"
+                  >
+                    <p className="break-words font-medium">
+                      {option.name}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No options added yet.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
 
         {/* Criteria */}
-        <Card>
+        <Card className="transition-shadow duration-300 hover:shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <SlidersHorizontal className="size-5 text-primary" />
@@ -209,27 +227,33 @@ export default async function DecisionPage({
 
           <CardContent>
             <div className="space-y-3">
-              {decision.criteria.map((criterion) => (
-                <div
-                  key={criterion.id}
-                  className="flex items-center justify-between gap-4 rounded-xl border bg-muted/30 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted/50"
-                >
-                  <span className="min-w-0 font-medium">
-                    {criterion.name}
-                  </span>
+              {decision.criteria.length > 0 ? (
+                decision.criteria.map((criterion) => (
+                  <div
+                    key={criterion.id}
+                    className="flex items-center justify-between gap-4 rounded-xl border bg-muted/30 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted/50"
+                  >
+                    <span className="min-w-0 break-words font-medium">
+                      {criterion.name}
+                    </span>
 
-                  <span className="shrink-0 rounded-md bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">
-                    {criterion.weight}
-                  </span>
-                </div>
-              ))}
+                    <span className="shrink-0 rounded-md bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">
+                      {criterion.weight}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No criteria added yet.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Scores */}
-      <Card className="mt-6">
+      <Card className="mt-6 overflow-hidden">
         <CardHeader>
           <CardTitle>Scores</CardTitle>
         </CardHeader>
@@ -244,7 +268,7 @@ export default async function DecisionPage({
       </Card>
 
       {/* Results */}
-      <Card className="mt-6">
+      <Card className="mt-6 overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="size-5 text-primary" />
@@ -253,28 +277,34 @@ export default async function DecisionPage({
         </CardHeader>
 
         <CardContent>
-          <div className="space-y-3">
-            {results.map((result, index) => (
-              <div
-                key={result.optionId}
-                className="flex items-center justify-between gap-4 rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted/40"
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                    #{index + 1}
-                  </span>
+          {results.length > 0 ? (
+            <div className="space-y-3">
+              {results.map((result, index) => (
+                <div
+                  key={result.optionId}
+                  className="flex items-center justify-between gap-4 rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted/40"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                      #{index + 1}
+                    </span>
 
-                  <span className="truncate font-medium">
-                    {result.name}
+                    <span className="truncate font-medium">
+                      {result.name}
+                    </span>
+                  </div>
+
+                  <span className="shrink-0 text-lg font-bold">
+                    {result.score}
                   </span>
                 </div>
-
-                <span className="shrink-0 text-lg font-bold">
-                  {result.score}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No results available yet.
+            </p>
+          )}
         </CardContent>
       </Card>
     </main>
