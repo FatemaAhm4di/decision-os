@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   FolderKanban,
   ListTodo,
@@ -11,6 +13,8 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+
 import {
   Card,
   CardContent,
@@ -18,19 +22,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
-import { Separator } from "@/components/ui/separator";
 
-import {
-  useDecisionForm,
-  type DecisionOption,
-  type DecisionCriterion,
-} from "../hooks/use-decision-form";
+type Option = {
+  id: string;
+  name: string;
+};
+
+type Criterion = {
+  id: string;
+  name: string;
+  weight: number;
+};
 
 type Props = {
   onCreated?: () => void;
   initialTitle?: string;
-  initialOptions?: DecisionOption[];
-  initialCriteria?: DecisionCriterion[];
+  initialOptions?: Option[];
+  initialCriteria?: Criterion[];
   mode?: "create" | "edit";
   decisionId?: string;
 };
@@ -43,63 +51,260 @@ export function CreateDecisionForm({
   mode = "create",
   decisionId,
 }: Props) {
-  const {
-    title,
-    setTitle,
+  const router = useRouter();
 
-    options,
-    criteria,
+  const [title, setTitle] = useState(initialTitle);
 
-    isLoading,
-    error,
+  const [options, setOptions] = useState<Option[]>(
+    initialOptions ?? [
+      {
+        id: crypto.randomUUID(),
+        name: "",
+      },
+    ]
+  );
 
-    roundedTotalWeight,
-    isWeightValid,
+  const [criteria, setCriteria] = useState<Criterion[]>(
+    initialCriteria ?? [
+      {
+        id: crypto.randomUUID(),
+        name: "",
+        weight: 1,
+      },
+    ]
+  );
 
-    addOption,
-    removeOption,
-    updateOption,
+  const [isLoading, setIsLoading] = useState(false);
 
-    addCriterion,
-    removeCriterion,
-    updateCriterion,
+  const totalWeight = criteria.reduce(
+    (sum, criterion) => sum + criterion.weight,
+    0
+  );
 
-    submit,
-  } = useDecisionForm({
-    initialTitle,
-    initialOptions,
-    initialCriteria,
-    mode,
-    decisionId,
-    onCreated,
-  });
+  const isWeightValid =
+    Math.abs(totalWeight - 1) <= 0.001;
+
+  function addOption() {
+    setOptions((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        name: "",
+      },
+    ]);
+  }
+
+  function removeOption(id: string) {
+    setOptions((prev) =>
+      prev.filter((option) => option.id !== id)
+    );
+  }
+
+  function updateOption(
+    id: string,
+    name: string
+  ) {
+    setOptions((prev) =>
+      prev.map((option) =>
+        option.id === id
+          ? {
+              ...option,
+              name,
+            }
+          : option
+      )
+    );
+  }
+
+  function addCriterion() {
+    setCriteria((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        name: "",
+        weight: 0,
+      },
+    ]);
+  }
+
+  function removeCriterion(id: string) {
+    setCriteria((prev) =>
+      prev.filter(
+        (criterion) => criterion.id !== id
+      )
+    );
+  }
+
+  function updateCriterion(
+    id: string,
+    field: "name" | "weight",
+    value: string | number
+  ) {
+    setCriteria((prev) =>
+      prev.map((criterion) =>
+        criterion.id === id
+          ? {
+              ...criterion,
+              [field]: value,
+            }
+          : criterion
+      )
+    );
+  }
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
-    await submit();
+
+    const trimmedTitle = title.trim();
+
+    if (!trimmedTitle) {
+      alert("Please enter a decision title.");
+      return;
+    }
+
+    const validOptions = options.filter(
+      (option) => option.name.trim() !== ""
+    );
+
+    if (validOptions.length === 0) {
+      alert("Add at least one option.");
+      return;
+    }
+
+    const validCriteria = criteria.filter(
+      (criterion) => criterion.name.trim() !== ""
+    );
+
+    if (validCriteria.length === 0) {
+      alert("Add at least one criterion.");
+      return;
+    }
+
+    const total = validCriteria.reduce(
+      (sum, criterion) => sum + criterion.weight,
+      0
+    );
+
+    if (Math.abs(total - 1) > 0.001) {
+      alert(
+        `Criteria weights must equal 1.\nCurrent total: ${total.toFixed(
+          2
+        )}`
+      );
+      return;
+    }
+
+    if (mode === "edit" && !decisionId) {
+      alert("Decision ID is missing.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const url =
+        mode === "edit"
+          ? `/api/decision/${decisionId}`
+          : "/api/decision";
+
+      const method =
+        mode === "edit" ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: trimmedTitle,
+          options: validOptions,
+          criteria: validCriteria,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+
+        throw new Error(
+          data?.message || "Request failed"
+        );
+      }
+
+      await res.json();
+
+      /*
+       * EDIT
+       *
+       * After successfully updating the decision,
+       * return the user to the main decisions page.
+       */
+      if (mode === "edit") {
+        router.push("/");
+        router.refresh();
+        return;
+      }
+
+      /*
+       * CREATE
+       *
+       * Reset the form and notify the parent
+       * so the decision list can refresh.
+       */
+      setTitle("");
+
+      setOptions([
+        {
+          id: crypto.randomUUID(),
+          name: "",
+        },
+      ]);
+
+      setCriteria([
+        {
+          id: crypto.randomUUID(),
+          name: "",
+          weight: 1,
+        },
+      ]);
+
+      onCreated?.();
+    } catch (error) {
+      console.error(
+        "Failed to save decision:",
+        error
+      );
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
-    <Card className="mt-8 overflow-hidden rounded-2xl border shadow-sm">
+    <Card className="mt-8 overflow-hidden rounded-2xl">
       <CardHeader className="space-y-5">
         <div className="flex items-start gap-4">
-          <div className="rounded-xl bg-primary/10 p-3 ring-1 ring-primary/10">
+          <div className="shrink-0 rounded-xl bg-primary/10 p-3 ring-1 ring-primary/10">
             <FolderKanban className="size-6 text-primary" />
           </div>
 
-          <div className="min-w-0 flex-1">
-            <CardTitle className="text-2xl font-semibold tracking-tight">
+          <div className="min-w-0">
+            <CardTitle className="text-2xl tracking-tight sm:text-3xl">
               {mode === "edit"
                 ? "Edit Decision"
                 : "Create New Decision"}
             </CardTitle>
 
-            <CardDescription className="mt-1.5 max-w-2xl">
+            <CardDescription className="mt-2 max-w-xl">
               {mode === "edit"
                 ? "Update your decision, options, and weighted criteria."
-                : "Compare different options using weighted criteria to make a better decision."}
+                : "Compare your options using weighted criteria to make a better decision."}
             </CardDescription>
           </div>
         </div>
@@ -114,17 +319,17 @@ export function CreateDecisionForm({
         >
           {/* Decision title */}
           <div className="space-y-2">
-            <Label htmlFor="decision-title">
+            <Label htmlFor="title">
               Decision Title
             </Label>
 
             <Input
-              id="decision-title"
+              id="title"
               value={title}
               onChange={(event) =>
                 setTitle(event.target.value)
               }
-              placeholder="e.g. Choose a new laptop"
+              placeholder="e.g. Which laptop should I buy?"
               disabled={isLoading}
               className="h-11"
             />
@@ -135,15 +340,15 @@ export function CreateDecisionForm({
           {/* Options */}
           <section className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-3">
                 <div className="rounded-lg bg-primary/10 p-2">
                   <ListTodo className="size-5 text-primary" />
                 </div>
 
                 <div>
-                  <h3 className="font-semibold">
+                  <h2 className="font-semibold">
                     Options
-                  </h3>
+                  </h2>
 
                   <p className="text-sm text-muted-foreground">
                     Add the choices you want to compare.
@@ -159,7 +364,7 @@ export function CreateDecisionForm({
                 disabled={isLoading}
                 className="w-full sm:w-auto"
               >
-                <Plus className="size-4" />
+                <Plus className="mr-2 size-4" />
                 Add Option
               </Button>
             </div>
@@ -168,11 +373,11 @@ export function CreateDecisionForm({
               {options.map((option, index) => (
                 <div
                   key={option.id}
-                  className="group flex items-center gap-2"
+                  className="flex items-center gap-2"
                 >
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-sm font-medium text-muted-foreground">
-                    {index + 1}
-                  </div>
+                  <span className="hidden w-6 shrink-0 text-sm text-muted-foreground sm:block">
+                    {index + 1}.
+                  </span>
 
                   <Input
                     value={option.name}
@@ -195,10 +400,13 @@ export function CreateDecisionForm({
                       removeOption(option.id)
                     }
                     disabled={
-                      isLoading || options.length <= 1
+                      isLoading ||
+                      options.length === 1
                     }
-                    aria-label={`Remove option ${index + 1}`}
-                    className="shrink-0 text-muted-foreground transition-colors hover:text-destructive"
+                    aria-label={`Remove option ${
+                      index + 1
+                    }`}
+                    className="shrink-0 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                   >
                     <Trash2 className="size-4" />
                   </Button>
@@ -212,18 +420,19 @@ export function CreateDecisionForm({
           {/* Criteria */}
           <section className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-3">
                 <div className="rounded-lg bg-primary/10 p-2">
                   <SlidersHorizontal className="size-5 text-primary" />
                 </div>
 
                 <div>
-                  <h3 className="font-semibold">
+                  <h2 className="font-semibold">
                     Criteria
-                  </h3>
+                  </h2>
 
                   <p className="text-sm text-muted-foreground">
-                    Define what matters and assign its weight.
+                    Define what matters and assign each
+                    criterion a weight.
                   </p>
                 </div>
               </div>
@@ -236,82 +445,100 @@ export function CreateDecisionForm({
                 disabled={isLoading}
                 className="w-full sm:w-auto"
               >
-                <Plus className="size-4" />
+                <Plus className="mr-2 size-4" />
                 Add Criterion
               </Button>
             </div>
 
             <div className="space-y-3">
-              {criteria.map((criterion, index) => (
-                <div
-                  key={criterion.id}
-                  className="grid gap-2 sm:grid-cols-[1fr_120px_auto]"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-sm font-medium text-muted-foreground">
-                      {index + 1}
+              {criteria.map(
+                (criterion, index) => (
+                  <div
+                    key={criterion.id}
+                    className="flex flex-col gap-2 rounded-xl border p-3 sm:flex-row sm:items-center"
+                  >
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <span className="hidden w-6 shrink-0 text-sm text-muted-foreground sm:block">
+                        {index + 1}.
+                      </span>
+
+                      <Input
+                        value={criterion.name}
+                        onChange={(event) =>
+                          updateCriterion(
+                            criterion.id,
+                            "name",
+                            event.target.value
+                          )
+                        }
+                        placeholder={`Criterion ${
+                          index + 1
+                        }`}
+                        disabled={isLoading}
+                        className="h-11"
+                      />
                     </div>
 
-                    <Input
-                      value={criterion.name}
-                      onChange={(event) =>
-                        updateCriterion(
-                          criterion.id,
-                          "name",
-                          event.target.value
-                        )
-                      }
-                      placeholder={`Criterion ${index + 1}`}
-                      disabled={isLoading}
-                      className="h-11"
-                    />
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1 sm:w-28 sm:flex-none">
+                        <Input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="1"
+                          value={criterion.weight}
+                          onChange={(event) =>
+                            updateCriterion(
+                              criterion.id,
+                              "weight",
+                              Number(
+                                event.target.value
+                              )
+                            )
+                          }
+                          disabled={isLoading}
+                          aria-label={`Weight for ${criterion.name || `criterion ${index + 1}`}`}
+                          className="h-11 pr-12"
+                        />
+
+                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                          weight
+                        </span>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                          removeCriterion(
+                            criterion.id
+                          )
+                        }
+                        disabled={
+                          isLoading ||
+                          criteria.length === 1
+                        }
+                        aria-label={`Remove criterion ${
+                          index + 1
+                        }`}
+                        className="shrink-0 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
                   </div>
-
-                  <Input
-                    type="number"
-                    min={0}
-                    max={1}
-                    step={0.05}
-                    value={criterion.weight}
-                    onChange={(event) =>
-                      updateCriterion(
-                        criterion.id,
-                        "weight",
-                        Number(event.target.value)
-                      )
-                    }
-                    disabled={isLoading}
-                    aria-label={`${criterion.name || `Criterion ${index + 1}`} weight`}
-                    className="h-11"
-                  />
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() =>
-                      removeCriterion(criterion.id)
-                    }
-                    disabled={
-                      isLoading || criteria.length <= 1
-                    }
-                    aria-label={`Remove criterion ${index + 1}`}
-                    className="shrink-0 text-muted-foreground transition-colors hover:text-destructive"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              ))}
+                )
+              )}
             </div>
 
             {/* Weight summary */}
             <div
-              className={[
-                "flex flex-col gap-2 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between",
+              className={`flex flex-col gap-1 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
                 isWeightValid
-                  ? "border-primary/20 bg-primary/[0.04]"
-                  : "border-destructive/20 bg-destructive/[0.04]",
-              ].join(" ")}
+                  ? "border-primary/20 bg-primary/5"
+                  : "border-destructive/20 bg-destructive/5"
+              }`}
             >
               <div>
                 <p className="text-sm font-medium">
@@ -319,39 +546,42 @@ export function CreateDecisionForm({
                 </p>
 
                 <p className="text-xs text-muted-foreground">
-                  All criterion weights must add up to 1.
+                  All criteria weights must add up to 1.
                 </p>
               </div>
 
-              <div
-                className={[
-                  "text-lg font-bold",
+              <span
+                className={`text-lg font-bold ${
                   isWeightValid
                     ? "text-primary"
-                    : "text-destructive",
-                ].join(" ")}
+                    : "text-destructive"
+                }`}
               >
-                {roundedTotalWeight.toFixed(2)} / 1.00
-              </div>
+                {totalWeight.toFixed(1)} / 1.0
+              </span>
             </div>
           </section>
 
-          {/* Error */}
-          {error && (
-            <div
-              role="alert"
-              className="rounded-xl border border-destructive/20 bg-destructive/[0.05] px-4 py-3 text-sm text-destructive"
-            >
-              {error}
-            </div>
-          )}
+          <Separator />
 
           {/* Submit */}
-          <div className="flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            {mode === "edit" && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isLoading}
+                onClick={() => router.push("/")}
+                className="w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+            )}
+
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full sm:w-auto"
+              className="w-full sm:min-w-40 sm:w-auto"
             >
               {isLoading
                 ? mode === "edit"
