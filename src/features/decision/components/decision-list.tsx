@@ -1,6 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  AlertCircle,
+  FileSearch,
+  Plus,
+  RotateCcw,
+} from "lucide-react";
+
+import { Button } from "@/components/ui/Button";
 
 import { useDecisions } from "../hooks/use-decisions";
 
@@ -19,38 +27,85 @@ export function DecisionList() {
   const [search, setSearch] = useState("");
 
   const filteredDecisions = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    if (!query) {
+      return decisions;
+    }
+
     return decisions.filter((decision) =>
       decision.title
         .toLowerCase()
-        .includes(search.toLowerCase())
+        .includes(query)
     );
   }, [decisions, search]);
 
+  const totalOptions = useMemo(
+    () =>
+      decisions.reduce(
+        (total, decision) =>
+          total +
+          (decision.options?.length ?? 0),
+        0
+      ),
+    [decisions]
+  );
+
+  const totalCriteria = useMemo(
+    () =>
+      decisions.reduce(
+        (total, decision) =>
+          total +
+          (decision.criteria?.length ?? 0),
+        0
+      ),
+    [decisions]
+  );
+
   if (isLoading) {
     return (
-      <p className="mt-8">
-        Loading...
-      </p>
+      <div className="space-y-8">
+        {/* Stats skeleton */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="h-28 animate-pulse rounded-2xl border bg-muted/40"
+            />
+          ))}
+        </div>
+
+        {/* Controls skeleton */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="h-10 w-full animate-pulse rounded-lg bg-muted md:max-w-md" />
+
+          <div className="h-10 w-full animate-pulse rounded-lg bg-muted md:w-40" />
+        </div>
+
+        {/* Cards skeleton */}
+        <div className="grid gap-5 md:grid-cols-2">
+          {[1, 2, 3, 4].map((item) => (
+            <div
+              key={item}
+              className="h-64 animate-pulse rounded-2xl border bg-muted/40"
+            />
+          ))}
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="space-y-8">
+      {/* Stats */}
       <DecisionStats
         decisions={decisions.length}
-        options={decisions.reduce(
-          (total, decision) =>
-            total + (decision.options?.length ?? 0),
-          0
-        )}
-        criteria={decisions.reduce(
-          (total, decision) =>
-            total + (decision.criteria?.length ?? 0),
-          0
-        )}
+        options={totalOptions}
+        criteria={totalCriteria}
       />
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      {/* Toolbar */}
+      <div className="flex flex-col gap-4 rounded-2xl border bg-card p-4 shadow-sm sm:p-5 md:flex-row md:items-center md:justify-between">
         <div className="w-full md:max-w-md">
           <DecisionSearch
             value={search}
@@ -63,22 +118,90 @@ export function DecisionList() {
         />
       </div>
 
-      {filteredDecisions.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-12 text-center">
-          <h3 className="text-xl font-semibold">
-            {search
-              ? "No matching decisions"
-              : "No decisions yet"}
+      {/* Search result count */}
+      {search.trim() && decisions.length > 0 && (
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">
+            Showing{" "}
+            <span className="font-medium text-foreground">
+              {filteredDecisions.length}
+            </span>{" "}
+            of{" "}
+            <span className="font-medium text-foreground">
+              {decisions.length}
+            </span>{" "}
+            decisions
+          </p>
+
+          {search.trim() && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setSearch("")}
+              className="shrink-0"
+            >
+              Clear search
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {decisions.length === 0 ? (
+        <div className="rounded-2xl border border-dashed bg-card px-6 py-14 text-center sm:px-10">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+            <Plus className="size-6 text-primary" />
+          </div>
+
+          <h3 className="mt-5 text-xl font-semibold tracking-tight">
+            No decisions yet
           </h3>
 
-          <p className="mt-2 text-muted-foreground">
-            {search
-              ? "Try another search keyword."
-              : "Create your first decision to get started."}
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+            Start by creating your first decision.
+            Add the options you are considering and the
+            criteria that matter most.
           </p>
+
+          <div className="mt-6 flex justify-center">
+            <CreateDecisionDialog
+              onCreated={refetch}
+            />
+          </div>
+        </div>
+      ) : filteredDecisions.length === 0 ? (
+        /* No search results */
+        <div className="rounded-2xl border border-dashed bg-card px-6 py-14 text-center sm:px-10">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-muted">
+            <FileSearch className="size-6 text-muted-foreground" />
+          </div>
+
+          <h3 className="mt-5 text-xl font-semibold tracking-tight">
+            No matching decisions
+          </h3>
+
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+            Nothing matches{" "}
+            <span className="font-medium text-foreground">
+              “{search.trim()}”
+            </span>
+            . Try a different keyword.
+          </p>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-6"
+            onClick={() => setSearch("")}
+          >
+            <RotateCcw className="size-4" />
+            Clear search
+          </Button>
         </div>
       ) : (
-        <div className="space-y-4">
+        /* Decision cards */
+        <div className="grid gap-5 md:grid-cols-2">
           {filteredDecisions.map((decision) => (
             <DecisionCard
               key={decision.id}
