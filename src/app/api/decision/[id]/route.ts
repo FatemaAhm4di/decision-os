@@ -111,8 +111,7 @@ export async function PUT(
 
     if (
       error instanceof Error &&
-      error.message ===
-        "Decision title is required"
+      error.message === "Decision title is required"
     ) {
       return NextResponse.json(
         {
@@ -153,11 +152,22 @@ export async function DELETE(
       );
     }
 
-    await deleteDecision(id);
+    const deletedDecision =
+      await deleteDecision(id);
+
+    if (!deletedDecision) {
+      return NextResponse.json(
+        {
+          message: "Decision not found",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
 
     return NextResponse.json({
-      message:
-        "Decision deleted successfully",
+      message: "Decision deleted successfully",
     });
   } catch (error) {
     console.error(

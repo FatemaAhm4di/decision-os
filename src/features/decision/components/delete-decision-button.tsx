@@ -1,5 +1,12 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Loader2,
+  Trash2,
+} from "lucide-react";
+
 import { Button } from "@/components/ui/Button";
 
 type Props = {
@@ -9,12 +16,25 @@ type Props = {
 export function DeleteDecisionButton({
   decisionId,
 }: Props) {
+  const router = useRouter();
+
+  const [isDeleting, setIsDeleting] =
+    useState(false);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
   async function handleDelete() {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this decision?"
+      "Are you sure you want to delete this decision? This action cannot be undone."
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setError(null);
 
     try {
       const res = await fetch(
@@ -24,26 +44,64 @@ export function DeleteDecisionButton({
         }
       );
 
+      const data = await res
+        .json()
+        .catch(() => null);
+
       if (!res.ok) {
         throw new Error(
-          "Failed to delete decision"
+          data?.message ??
+            "Failed to delete decision"
         );
       }
 
-      window.location.reload();
+      router.refresh();
     } catch (error) {
-      console.error(error);
+      console.error(
+        "Failed to delete decision:",
+        error
+      );
 
-      alert("Something went wrong.");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete this decision."
+      );
+    } finally {
+      setIsDeleting(false);
     }
   }
 
   return (
-    <Button
-      variant="destructive"
-      onClick={handleDelete}
-    >
-      Delete
-    </Button>
+    <div className="flex flex-col items-end gap-2">
+      <Button
+        type="button"
+        variant="destructive"
+        onClick={handleDelete}
+        disabled={isDeleting}
+        aria-label="Delete decision"
+      >
+        {isDeleting ? (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Deleting...
+          </>
+        ) : (
+          <>
+            <Trash2 className="size-4" />
+            Delete
+          </>
+        )}
+      </Button>
+
+      {error && (
+        <p
+          role="alert"
+          className="max-w-xs text-right text-xs text-destructive"
+        >
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
