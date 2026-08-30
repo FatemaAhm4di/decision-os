@@ -1,9 +1,11 @@
 import Link from "next/link";
+
 import {
   ArrowRight,
   CalendarDays,
   FolderKanban,
   ListTodo,
+  Pencil,
   SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
@@ -16,7 +18,9 @@ import {
 } from "@/components/ui/Card";
 
 import { Button } from "@/components/ui/Button";
+
 import { Decision } from "@/types/decision";
+
 import { DeleteDecisionButton } from "./delete-decision-button";
 
 type DecisionCardProps = {
@@ -60,7 +64,6 @@ export function DecisionCard({
         hover:shadow-2xl
       "
     >
-      {/* Accent */}
       <div
         className="
           absolute
@@ -83,6 +86,7 @@ export function DecisionCard({
                 flex
                 h-14
                 w-14
+                shrink-0
                 items-center
                 justify-center
                 rounded-2xl
@@ -152,8 +156,6 @@ export function DecisionCard({
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Stats */}
-
         <div className="grid grid-cols-2 gap-4">
           <div
             className="
@@ -200,15 +202,13 @@ export function DecisionCard({
           </div>
         </div>
 
-        {/* Progress */}
-
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="font-medium">
               Setup Progress
             </span>
 
-            <span className="text-primary font-semibold">
+            <span className="font-semibold text-primary">
               {Math.round(progress)}%
             </span>
           </div>
@@ -229,16 +229,12 @@ export function DecisionCard({
           </div>
         </div>
 
-        {/* Actions */}
-
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link
             href={`/decision/${decision.id}`}
             className="flex-1"
           >
-            <Button
-              className="group w-full"
-            >
+            <Button className="group w-full">
               Open Decision
 
               <ArrowRight
@@ -250,6 +246,20 @@ export function DecisionCard({
                   group-hover:translate-x-1
                 "
               />
+            </Button>
+          </Link>
+
+          <Link
+            href={`/decision/${decision.id}/edit`}
+            className="sm:w-auto"
+          >
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+            >
+              <Pencil className="mr-2 size-4" />
+              Edit
             </Button>
           </Link>
 
