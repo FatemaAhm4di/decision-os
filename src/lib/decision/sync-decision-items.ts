@@ -1,3 +1,4 @@
+
 import { Prisma } from "@prisma/client";
 
 type OptionInput = {
@@ -22,6 +23,7 @@ type ExistingDecision = {
     id: string;
     name: string;
   }[];
+
   criteria: {
     id: string;
     name: string;
@@ -35,57 +37,51 @@ export async function syncDecisionItems(
   existingDecision: ExistingDecision,
   data: UpdateDecisionInput
 ) {
-  /*
-   * OPTIONS
-   */
+  const existingOptionIds = new Set(
+    existingDecision.options.map((option) => option.id)
+  );
 
-  // Update existing options
+  const existingCriterionIds = new Set(
+    existingDecision.criteria.map(
+      (criterion) => criterion.id
+    )
+  );
+
+  const incomingOptionIds = new Set<string>();
+  const incomingCriterionIds = new Set<string>();
+
   for (const option of data.options) {
-    const exists =
-      existingDecision.options.find(
-        (item) => item.id === option.id
-      );
+    const name = option.name.trim();
 
-    if (exists) {
-      const name = option.name.trim();
-
-      if (name !== "") {
-        await tx.option.update({
-          where: {
-            id: option.id,
-          },
-          data: {
-            name,
-          },
-        });
-      }
+    if (!name) {
+      continue;
     }
-  }
 
-  // Create new options
-  for (const option of data.options) {
-    const exists =
-      existingDecision.options.find(
-        (item) => item.id === option.id
-      );
+    if (option.id) {
+      incomingOptionIds.add(option.id);
+    }
 
-    if (!exists && option.name.trim() !== "") {
+    if (existingOptionIds.has(option.id)) {
+      await tx.option.update({
+        where: {
+          id: option.id,
+        },
+        data: {
+          name,
+        },
+      });
+    } else {
       await tx.option.create({
         data: {
-          name: option.name.trim(),
+          name,
           decisionId,
         },
       });
     }
   }
 
-  // Delete removed options
   for (const option of existingDecision.options) {
-    const stillExists = data.options.some(
-      (item) => item.id === option.id
-    );
-
-    if (!stillExists) {
+    if (!incomingOptionIds.has(option.id)) {
       await tx.option.delete({
         where: {
           id: option.id,
@@ -94,48 +90,31 @@ export async function syncDecisionItems(
     }
   }
 
-  /*
-   * CRITERIA
-   */
-
-  // Update existing criteria
   for (const criterion of data.criteria) {
-    const exists =
-      existingDecision.criteria.find(
-        (item) => item.id === criterion.id
-      );
+    const name = criterion.name.trim();
 
-    if (exists) {
-      const name = criterion.name.trim();
-
-      if (name !== "") {
-        await tx.criterion.update({
-          where: {
-            id: criterion.id,
-          },
-          data: {
-            name,
-            weight: criterion.weight,
-          },
-        });
-      }
+    if (!name) {
+      continue;
     }
-  }
 
-  // Create new criteria
-  for (const criterion of data.criteria) {
-    const exists =
-      existingDecision.criteria.find(
-        (item) => item.id === criterion.id
-      );
+    if (criterion.id) {
+      incomingCriterionIds.add(criterion.id);
+    }
 
-    if (
-      !exists &&
-      criterion.name.trim() !== ""
-    ) {
+    if (existingCriterionIds.has(criterion.id)) {
+      await tx.criterion.update({
+        where: {
+          id: criterion.id,
+        },
+        data: {
+          name,
+          weight: criterion.weight,
+        },
+      });
+    } else {
       await tx.criterion.create({
         data: {
-          name: criterion.name.trim(),
+          name,
           weight: criterion.weight,
           decisionId,
         },
@@ -143,13 +122,8 @@ export async function syncDecisionItems(
     }
   }
 
-  // Delete removed criteria
   for (const criterion of existingDecision.criteria) {
-    const stillExists = data.criteria.some(
-      (item) => item.id === criterion.id
-    );
-
-    if (!stillExists) {
+    if (!incomingCriterionIds.has(criterion.id)) {
       await tx.criterion.delete({
         where: {
           id: criterion.id,

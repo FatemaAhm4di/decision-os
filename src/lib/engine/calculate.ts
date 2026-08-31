@@ -1,3 +1,4 @@
+
 type Score = {
   value: number;
   criterionId: string;
@@ -28,6 +29,13 @@ export type DecisionResult = {
 export function calculateDecision(
   decision: Decision
 ): DecisionResult[] {
+  if (
+    decision.options.length === 0 ||
+    decision.criteria.length === 0
+  ) {
+    return [];
+  }
+
   const totalWeight = decision.criteria.reduce(
     (sum, criterion) => sum + criterion.weight,
     0

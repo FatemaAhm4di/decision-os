@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 
 import { deleteDecision } from "@/lib/decision/delete-decision";
@@ -95,13 +96,21 @@ export async function PUT(
       error
     );
 
-    if (
-      error instanceof Error &&
-      error.message === "Decision not found"
-    ) {
+    if (!(error instanceof Error)) {
       return NextResponse.json(
         {
-          message: "Decision not found",
+          message: "Failed to update decision",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    if (error.message === "Decision not found") {
+      return NextResponse.json(
+        {
+          message: error.message,
         },
         {
           status: 404,
@@ -110,8 +119,37 @@ export async function PUT(
     }
 
     if (
-      error instanceof Error &&
-      error.message === "Decision title is required"
+      error.message ===
+      "Decision title is required"
+    ) {
+      return NextResponse.json(
+        {
+          message: error.message,
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      error.message.includes(
+        "Criteria weights must"
+      )
+    ) {
+      return NextResponse.json(
+        {
+          message: error.message,
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      error.message ===
+      "Criteria weights must be valid non-negative numbers"
     ) {
       return NextResponse.json(
         {

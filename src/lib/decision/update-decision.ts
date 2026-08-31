@@ -1,4 +1,6 @@
+
 import { prisma } from "@/lib/prisma";
+
 import { validateCriteriaWeights } from "@/lib/validation/decision";
 
 import { syncDecisionItems } from "./sync-decision-items";
@@ -24,6 +26,20 @@ export async function updateDecision(
   decisionId: string,
   data: UpdateDecisionInput
 ) {
+  const title = data.title.trim();
+
+  if (!title) {
+    throw new Error("Decision title is required");
+  }
+
+  if (!Array.isArray(data.options)) {
+    throw new Error("Options must be an array");
+  }
+
+  if (!Array.isArray(data.criteria)) {
+    throw new Error("Criteria must be an array");
+  }
+
   validateCriteriaWeights(data.criteria);
 
   return prisma.$transaction(async (tx) => {
@@ -40,14 +56,6 @@ export async function updateDecision(
 
     if (!existingDecision) {
       throw new Error("Decision not found");
-    }
-
-    const title = data.title.trim();
-
-    if (!title) {
-      throw new Error(
-        "Decision title is required"
-      );
     }
 
     await tx.decision.update({
