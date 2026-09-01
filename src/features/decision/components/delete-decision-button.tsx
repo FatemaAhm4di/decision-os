@@ -1,32 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  Loader2,
-  Trash2,
-} from "lucide-react";
+
+import { Trash2, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 
-type Props = {
+type DeleteDecisionButtonProps = {
   decisionId: string;
+  onDeleted: () => void;
 };
 
 export function DeleteDecisionButton({
   decisionId,
-}: Props) {
-  const router = useRouter();
-
-  const [isDeleting, setIsDeleting] =
-    useState(false);
-
-  const [error, setError] =
-    useState<string | null>(null);
+  onDeleted,
+}: DeleteDecisionButtonProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(
+    null
+  );
 
   async function handleDelete() {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this decision? This action cannot be undone."
+      "Are you sure you want to delete this decision?"
     );
 
     if (!confirmed) {
@@ -37,25 +33,25 @@ export function DeleteDecisionButton({
     setError(null);
 
     try {
-      const res = await fetch(
+      const response = await fetch(
         `/api/decision/${decisionId}`,
         {
           method: "DELETE",
         }
       );
 
-      const data = await res
-        .json()
-        .catch(() => null);
+      if (!response.ok) {
+        const data = await response
+          .json()
+          .catch(() => null);
 
-      if (!res.ok) {
         throw new Error(
           data?.message ??
             "Failed to delete decision"
         );
       }
 
-      router.refresh();
+      onDeleted();
     } catch (error) {
       console.error(
         "Failed to delete decision:",
@@ -65,7 +61,7 @@ export function DeleteDecisionButton({
       setError(
         error instanceof Error
           ? error.message
-          : "Unable to delete this decision."
+          : "Failed to delete decision"
       );
     } finally {
       setIsDeleting(false);
@@ -73,13 +69,13 @@ export function DeleteDecisionButton({
   }
 
   return (
-    <div className="flex flex-col items-end gap-2">
+    <div className="flex flex-col gap-2">
       <Button
         type="button"
-        variant="destructive"
+        variant="outline"
         onClick={handleDelete}
         disabled={isDeleting}
-        aria-label="Delete decision"
+        className="w-full sm:w-auto"
       >
         {isDeleting ? (
           <>
@@ -95,10 +91,7 @@ export function DeleteDecisionButton({
       </Button>
 
       {error && (
-        <p
-          role="alert"
-          className="max-w-xs text-right text-xs text-destructive"
-        >
+        <p className="text-xs text-destructive">
           {error}
         </p>
       )}

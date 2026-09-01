@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+
 import {
-  AlertCircle,
   FileSearch,
   Plus,
   RotateCcw,
@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/Button";
 
 import { useDecisions } from "../hooks/use-decisions";
-
 import { DecisionCard } from "./decision-card";
 import { CreateDecisionDialog } from "./create-decision-dialog";
 import { DecisionSearch } from "./decision-search";
@@ -44,8 +43,7 @@ export function DecisionList() {
     () =>
       decisions.reduce(
         (total, decision) =>
-          total +
-          (decision.options?.length ?? 0),
+          total + (decision.options?.length ?? 0),
         0
       ),
     [decisions]
@@ -55,8 +53,7 @@ export function DecisionList() {
     () =>
       decisions.reduce(
         (total, decision) =>
-          total +
-          (decision.criteria?.length ?? 0),
+          total + (decision.criteria?.length ?? 0),
         0
       ),
     [decisions]
@@ -65,7 +62,6 @@ export function DecisionList() {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        {/* Stats skeleton */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((item) => (
             <div
@@ -75,14 +71,12 @@ export function DecisionList() {
           ))}
         </div>
 
-        {/* Controls skeleton */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="h-10 w-full animate-pulse rounded-lg bg-muted md:max-w-md" />
 
           <div className="h-10 w-full animate-pulse rounded-lg bg-muted md:w-40" />
         </div>
 
-        {/* Cards skeleton */}
         <div className="grid gap-5 md:grid-cols-2">
           {[1, 2, 3, 4].map((item) => (
             <div
@@ -97,14 +91,12 @@ export function DecisionList() {
 
   return (
     <div className="space-y-8">
-      {/* Stats */}
       <DecisionStats
         decisions={decisions.length}
         options={totalOptions}
         criteria={totalCriteria}
       />
 
-      {/* Toolbar */}
       <div className="flex flex-col gap-4 rounded-2xl border bg-card p-4 shadow-sm sm:p-5 md:flex-row md:items-center md:justify-between">
         <div className="w-full md:max-w-md">
           <DecisionSearch
@@ -113,12 +105,9 @@ export function DecisionList() {
           />
         </div>
 
-        <CreateDecisionDialog
-          onCreated={refetch}
-        />
+        <CreateDecisionDialog onCreated={refetch} />
       </div>
 
-      {/* Search result count */}
       {search.trim() && decisions.length > 0 && (
         <div className="flex items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
@@ -133,21 +122,18 @@ export function DecisionList() {
             decisions
           </p>
 
-          {search.trim() && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setSearch("")}
-              className="shrink-0"
-            >
-              Clear search
-            </Button>
-          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setSearch("")}
+            className="shrink-0"
+          >
+            Clear search
+          </Button>
         </div>
       )}
 
-      {/* Empty state */}
       {decisions.length === 0 ? (
         <div className="rounded-2xl border border-dashed bg-card px-6 py-14 text-center sm:px-10">
           <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10">
@@ -165,13 +151,10 @@ export function DecisionList() {
           </p>
 
           <div className="mt-6 flex justify-center">
-            <CreateDecisionDialog
-              onCreated={refetch}
-            />
+            <CreateDecisionDialog onCreated={refetch} />
           </div>
         </div>
       ) : filteredDecisions.length === 0 ? (
-        /* No search results */
         <div className="rounded-2xl border border-dashed bg-card px-6 py-14 text-center sm:px-10">
           <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-muted">
             <FileSearch className="size-6 text-muted-foreground" />
@@ -200,12 +183,12 @@ export function DecisionList() {
           </Button>
         </div>
       ) : (
-        /* Decision cards */
         <div className="grid gap-5 md:grid-cols-2">
           {filteredDecisions.map((decision) => (
             <DecisionCard
               key={decision.id}
               decision={decision}
+              onDeleted={refetch}
             />
           ))}
         </div>

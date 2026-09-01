@@ -5,7 +5,6 @@ import {
   CalendarDays,
   FolderKanban,
   ListTodo,
-  Pencil,
   SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
@@ -25,13 +24,16 @@ import { DeleteDecisionButton } from "./delete-decision-button";
 
 type DecisionCardProps = {
   decision: Decision;
+  onDeleted: () => void;
 };
 
 export function DecisionCard({
   decision,
+  onDeleted,
 }: DecisionCardProps) {
   const optionCount = decision.options?.length ?? 0;
-  const criterionCount = decision.criteria?.length ?? 0;
+  const criterionCount =
+    decision.criteria?.length ?? 0;
 
   const progress = Math.min(
     ((optionCount + criterionCount) / 6) * 100,
@@ -86,7 +88,6 @@ export function DecisionCard({
                 flex
                 h-14
                 w-14
-                shrink-0
                 items-center
                 justify-center
                 rounded-2xl
@@ -249,22 +250,9 @@ export function DecisionCard({
             </Button>
           </Link>
 
-          <Link
-            href={`/decision/${decision.id}/edit`}
-            className="sm:w-auto"
-          >
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-            >
-              <Pencil className="mr-2 size-4" />
-              Edit
-            </Button>
-          </Link>
-
           <DeleteDecisionButton
             decisionId={decision.id}
+            onDeleted={onDeleted}
           />
         </div>
       </CardContent>
