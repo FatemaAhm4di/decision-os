@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   FolderKanban,
   ListTodo,
   Plus,
@@ -152,107 +153,113 @@ export function CreateDecisionForm({
     );
   }
 
-async function handleSubmit(
-  event: React.FormEvent<HTMLFormElement>
-) {
-  event.preventDefault();
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
 
-  const trimmedTitle = title.trim();
+    const trimmedTitle = title.trim();
 
-  if (!trimmedTitle) {
-    alert("Please enter a decision title.");
-    return;
-  }
-
-  const validOptions = options.filter(
-    (option) => option.name.trim() !== ""
-  );
-
-  if (validOptions.length === 0) {
-    alert("Add at least one option.");
-    return;
-  }
-
-  const validCriteria = criteria.filter(
-    (criterion) => criterion.name.trim() !== ""
-  );
-
-  if (validCriteria.length === 0) {
-    alert("Add at least one criterion.");
-    return;
-  }
-
-  const total = validCriteria.reduce(
-    (sum, criterion) => sum + criterion.weight,
-    0
-  );
-
-  if (Math.abs(total - 1) > 0.001) {
-    alert(
-      `Criteria weights must equal 1.\nCurrent total: ${total.toFixed(
-        2
-      )}`
-    );
-    return;
-  }
-
-  if (mode === "edit" && !decisionId) {
-    alert("Decision ID is missing.");
-    return;
-  }
-
-  setIsLoading(true);
-
-  try {
-    const url =
-      mode === "edit"
-        ? `/api/decision/${decisionId}`
-        : "/api/decision";
-
-    const method =
-      mode === "edit" ? "PUT" : "POST";
-
-    const res = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        title: trimmedTitle,
-        options: validOptions,
-        criteria: validCriteria,
-      }),
-    });
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => null);
-
-      throw new Error(
-        data?.message || "Request failed"
-      );
+    if (!trimmedTitle) {
+      alert("Please enter a decision title.");
+      return;
     }
 
-    await res.json();
-
-    // After creating or editing a decision,
-    // return to the home page.
-    router.push("/");
-    router.refresh();
-  } catch (error) {
-    console.error(
-      "Failed to save decision:",
-      error
+    const validOptions = options.filter(
+      (option) => option.name.trim() !== ""
     );
 
-    alert(
-      error instanceof Error
-        ? error.message
-        : "Something went wrong."
+    if (validOptions.length === 0) {
+      alert("Add at least one option.");
+      return;
+    }
+
+    const validCriteria = criteria.filter(
+      (criterion) => criterion.name.trim() !== ""
     );
-  } finally {
-    setIsLoading(false);
+
+    if (validCriteria.length === 0) {
+      alert("Add at least one criterion.");
+      return;
+    }
+
+    const total = validCriteria.reduce(
+      (sum, criterion) => sum + criterion.weight,
+      0
+    );
+
+    if (Math.abs(total - 1) > 0.001) {
+      alert(
+        `Criteria weights must equal 1.\nCurrent total: ${total.toFixed(
+          2
+        )}`
+      );
+      return;
+    }
+
+    if (mode === "edit" && !decisionId) {
+      alert("Decision ID is missing.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const url =
+        mode === "edit"
+          ? `/api/decision/${decisionId}`
+          : "/api/decision";
+
+      const method =
+        mode === "edit" ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: trimmedTitle,
+          options: validOptions,
+          criteria: validCriteria,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+
+        throw new Error(
+          data?.message || "Request failed"
+        );
+      }
+
+      await res.json();
+
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error(
+        "Failed to save decision:",
+        error
+      );
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }
-}
+
+  function handleBackToHome() {
+    if (isLoading) {
+      return;
+    }
+
+    router.push("/");
+  }
 
   return (
     <Card className="mt-8 overflow-hidden rounded-2xl">
@@ -465,7 +472,10 @@ async function handleSubmit(
                             )
                           }
                           disabled={isLoading}
-                          aria-label={`Weight for ${criterion.name || `criterion ${index + 1}`}`}
+                          aria-label={`Weight for ${
+                            criterion.name ||
+                            `criterion ${index + 1}`
+                          }`}
                           className="h-11 pr-12"
                         />
 
@@ -534,17 +544,16 @@ async function handleSubmit(
 
           {/* Submit */}
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            {mode === "edit" && (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={isLoading}
-                onClick={() => router.push("/")}
-                className="w-full sm:w-auto"
-              >
-                Cancel
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isLoading}
+              onClick={handleBackToHome}
+              className="w-full sm:w-auto"
+            >
+              <ArrowLeft className="mr-2 size-4" />
+              Back to Home
+            </Button>
 
             <Button
               type="submit"
