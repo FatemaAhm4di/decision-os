@@ -3,13 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  Check,
-  Menu,
-  Moon,
-  Sun,
-  X,
-} from "lucide-react";
+import { Check, Menu, Moon, Sun, X } from "lucide-react";
 
 import { navigationItems } from "./navigation";
 
@@ -17,7 +11,6 @@ export default function Navbar() {
   const pathname = usePathname();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = isMenuOpen ? "hidden" : "";
@@ -28,11 +21,10 @@ export default function Navbar() {
   }, [isMenuOpen]);
 
   const toggleTheme = () => {
-    const root = document.documentElement;
-    const nextTheme = !root.classList.contains("dark");
-
-    root.classList.toggle("dark", nextTheme);
-    setIsDark(nextTheme);
+    document.documentElement.classList.toggle(
+      "dark",
+      !document.documentElement.classList.contains("dark")
+    );
   };
 
   const isActive = (href: string) => {
@@ -49,71 +41,72 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden">
-        <div className="flex h-16 items-center justify-between px-4 sm:px-6">
-          <Link
-            href="/"
-            className="flex shrink-0 items-center gap-2.5 rounded-md outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Decision OS home"
+      {/* Mobile Header */}
+      <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 rounded-md outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label="Decision OS home"
+        >
+          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Check className="size-5" strokeWidth={2.5} />
+          </span>
+
+          <span className="text-base font-semibold tracking-tight text-foreground">
+            Decision OS
+          </span>
+        </Link>
+
+        <div className="flex items-center gap-1">
+          {/* Theme */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Toggle theme"
+            title="Toggle theme"
           >
-            <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Check className="size-5" strokeWidth={2.5} />
-            </span>
+            <Moon className="size-4 dark:hidden" />
+            <Sun className="hidden size-4 dark:block" />
+          </button>
 
-            <span className="text-base font-semibold tracking-tight text-foreground">
-              Decision OS
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label={
-                isDark ? "Switch to light mode" : "Switch to dark mode"
-              }
-            >
-              {isDark ? (
-                <Sun className="size-4" />
-              ) : (
-                <Moon className="size-4" />
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsMenuOpen((open) => !open)}
-              className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={isMenuOpen}
-              aria-controls="mobile-navigation"
-            >
-              {isMenuOpen ? (
-                <X className="size-5" />
-              ) : (
-                <Menu className="size-5" />
-              )}
-            </button>
-          </div>
+          {/* Menu */}
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((open) => !open)}
+            className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-navigation"
+          >
+            {isMenuOpen ? (
+              <X className="size-5" />
+            ) : (
+              <Menu className="size-5" />
+            )}
+          </button>
         </div>
       </header>
 
+      {/* Mobile Drawer */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
+          {/* Overlay */}
           <button
             type="button"
             aria-label="Close menu"
             onClick={closeMenu}
-            className="absolute inset-0 bg-foreground/30 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
           />
 
+          {/* Drawer */}
           <aside
             id="mobile-navigation"
             className="absolute right-0 top-0 flex h-full w-[min(20rem,85vw)] flex-col border-l border-border bg-background shadow-xl"
             aria-label="Mobile navigation"
           >
-            <div className="flex h-16 items-center justify-between border-b border-border px-4">
+            {/* Drawer Header */}
+            <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4">
               <div className="flex items-center gap-2.5">
                 <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Check className="size-4" strokeWidth={2.5} />
@@ -134,8 +127,9 @@ export default function Navbar() {
               </button>
             </div>
 
+            {/* Navigation */}
             <nav
-              className="flex flex-1 flex-col gap-1 p-4"
+              className="flex flex-1 flex-col gap-1 overflow-y-auto p-4"
               aria-label="Mobile navigation"
             >
               {navigationItems.map((item) => {
@@ -163,24 +157,19 @@ export default function Navbar() {
               })}
             </nav>
 
-            <div className="border-t border-border p-4">
+            {/* Mobile Theme */}
+            <div className="shrink-0 border-t border-border p-4">
               <button
                 type="button"
                 onClick={toggleTheme}
                 className="flex w-full items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <span className="flex items-center gap-3">
-                  {isDark ? (
-                    <Sun className="size-5" />
-                  ) : (
-                    <Moon className="size-5" />
-                  )}
+                  <Moon className="size-5 dark:hidden" />
+                  <Sun className="hidden size-5 dark:block" />
 
-                  {isDark ? "Light mode" : "Dark mode"}
-                </span>
-
-                <span className="text-xs text-muted-foreground">
-                  {isDark ? "Dark" : "Light"}
+                  <span className="dark:hidden">Dark mode</span>
+                  <span className="hidden dark:inline">Light mode</span>
                 </span>
               </button>
             </div>
