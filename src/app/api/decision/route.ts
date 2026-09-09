@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import { prisma } from "@/lib/prisma";
 import { validateCriteriaWeights } from "@/lib/validation/decision";
 
@@ -11,7 +12,6 @@ export async function POST(req: Request) {
     const decision = await prisma.decision.create({
       data: {
         title: body.title,
-
         options: {
           create: body.options
             .filter(
@@ -22,7 +22,6 @@ export async function POST(req: Request) {
               name: option.name,
             })),
         },
-
         criteria: {
           create: body.criteria
             .filter(
@@ -40,7 +39,6 @@ export async function POST(req: Request) {
             ),
         },
       },
-
       include: {
         options: true,
         criteria: true,
@@ -62,17 +60,53 @@ export async function GET() {
   try {
     const decisions = await prisma.decision.findMany({
       include: {
-        options: true,
+        options: {
+          include: {
+            scores: {
+              select: {
+                id: true,
+                criterionId: true,
+                value: true,
+              },
+            },
+          },
+        },
         criteria: true,
       },
-
       orderBy: {
         createdAt: "desc",
       },
     });
-    
 
-    return NextResponse.json(decisions);
+    const decisionsWithStatus = decisions.map((decision) => {
+      const expectedScoreCount =
+        decision.options.length * decision.criteria.length;
+
+      const actualScoreCount = decision.options.reduce(
+        (total, option) => total + option.scores.length,
+        0
+      );
+
+      const hasCompleteScores =
+        expectedScoreCount > 0 &&
+        actualScoreCount === expectedScoreCount;
+
+      return {
+        id: decision.id,
+        title: decision.title,
+        createdAt: decision.createdAt,
+        updatedAt: decision.updatedAt,
+        options: decision.options.map((option) => ({
+          id: option.id,
+          name: option.name,
+          decisionId: option.decisionId,
+        })),
+        criteria: decision.criteria,
+        isCompleted: hasCompleteScores,
+      };
+    });
+
+    return NextResponse.json(decisionsWithStatus);
   } catch (error) {
     console.error(error);
 

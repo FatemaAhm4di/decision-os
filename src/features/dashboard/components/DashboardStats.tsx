@@ -17,6 +17,7 @@ type DashboardDecision = {
   criteria: {
     id: string;
   }[];
+  isCompleted?: boolean;
 };
 
 type DashboardStatsData = {
@@ -34,7 +35,9 @@ const initialStats: DashboardStatsData = {
 };
 
 export default function DashboardStats() {
-  const [stats, setStats] = useState<DashboardStatsData>(initialStats);
+  const [stats, setStats] =
+    useState<DashboardStatsData>(initialStats);
+
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -47,30 +50,39 @@ export default function DashboardStats() {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch dashboard statistics");
+          throw new Error(
+            "Failed to fetch dashboard statistics"
+          );
         }
 
-        const decisions: DashboardDecision[] = await response.json();
+        const decisions: DashboardDecision[] =
+          await response.json();
 
         if (!isMounted) {
           return;
         }
 
         const totalOptions = decisions.reduce(
-          (total, decision) => total + decision.options.length,
+          (total, decision) =>
+            total + decision.options.length,
           0
         );
 
         const totalCriteria = decisions.reduce(
-          (total, decision) => total + decision.criteria.length,
+          (total, decision) =>
+            total + decision.criteria.length,
           0
         );
+
+        const completedDecisions = decisions.filter(
+          (decision) => decision.isCompleted === true
+        ).length;
 
         setStats({
           totalDecisions: decisions.length,
           totalOptions,
           totalCriteria,
-          completedDecisions: 0,
+          completedDecisions,
         });
       } catch (error) {
         console.error(error);
