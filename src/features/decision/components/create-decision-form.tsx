@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+
 import {
   ArrowLeft,
   FolderKanban,
@@ -77,12 +78,25 @@ export function CreateDecisionForm({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const totalWeight = criteria.reduce(
+  const namedCriteria = criteria.filter(
+    (criterion) => criterion.name.trim() !== ""
+  );
+
+  const totalWeight = namedCriteria.reduce(
     (sum, criterion) => sum + criterion.weight,
     0
   );
 
+  const hasValidWeights = namedCriteria.every(
+    (criterion) =>
+      Number.isFinite(criterion.weight) &&
+      criterion.weight >= 0 &&
+      criterion.weight <= 1
+  );
+
   const isWeightValid =
+    namedCriteria.length > 0 &&
+    hasValidWeights &&
     Math.abs(totalWeight - 1) <= 0.001;
 
   function addOption() {
@@ -101,10 +115,7 @@ export function CreateDecisionForm({
     );
   }
 
-  function updateOption(
-    id: string,
-    name: string
-  ) {
+  function updateOption(id: string, name: string) {
     setOptions((prev) =>
       prev.map((option) =>
         option.id === id
@@ -130,9 +141,7 @@ export function CreateDecisionForm({
 
   function removeCriterion(id: string) {
     setCriteria((prev) =>
-      prev.filter(
-        (criterion) => criterion.id !== id
-      )
+      prev.filter((criterion) => criterion.id !== id)
     );
   }
 
@@ -153,9 +162,7 @@ export function CreateDecisionForm({
     );
   }
 
-  async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const trimmedTitle = title.trim();
@@ -180,6 +187,18 @@ export function CreateDecisionForm({
 
     if (validCriteria.length === 0) {
       alert("Add at least one criterion.");
+      return;
+    }
+
+    const hasInvalidWeight = validCriteria.some(
+      (criterion) =>
+        !Number.isFinite(criterion.weight) ||
+        criterion.weight < 0 ||
+        criterion.weight > 1
+    );
+
+    if (hasInvalidWeight) {
+      alert("Each criterion weight must be between 0 and 1.");
       return;
     }
 
@@ -210,10 +229,9 @@ export function CreateDecisionForm({
           ? `/api/decision/${decisionId}`
           : "/api/decision";
 
-      const method =
-        mode === "edit" ? "PUT" : "POST";
+      const method = mode === "edit" ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -225,23 +243,22 @@ export function CreateDecisionForm({
         }),
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
 
         throw new Error(
-          data?.message || "Request failed"
+          data?.message || "Failed to save decision."
         );
       }
 
-      await res.json();
+      await response.json();
+
+      onCreated?.();
 
       router.push("/");
       router.refresh();
     } catch (error) {
-      console.error(
-        "Failed to save decision:",
-        error
-      );
+      console.error("Failed to save decision:", error);
 
       alert(
         error instanceof Error
@@ -292,7 +309,6 @@ export function CreateDecisionForm({
           onSubmit={handleSubmit}
           className="space-y-8"
         >
-          {/* Decision title */}
           <div className="space-y-2">
             <Label htmlFor="title">
               Decision Title
@@ -312,16 +328,24 @@ export function CreateDecisionForm({
 
           <Separator />
 
-          {/* Options */}
-          <section className="space-y-4">
+          <section
+            aria-labelledby="options-heading"
+            className="space-y-4"
+          >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <div className="rounded-lg bg-primary/10 p-2">
-                  <ListTodo className="size-5 text-primary" />
+                  <ListTodo
+                    className="size-5 text-primary"
+                    aria-hidden="true"
+                  />
                 </div>
 
                 <div>
-                  <h2 className="font-semibold">
+                  <h2
+                    id="options-heading"
+                    className="font-semibold"
+                  >
                     Options
                   </h2>
 
@@ -365,6 +389,7 @@ export function CreateDecisionForm({
                     placeholder={`Option ${index + 1}`}
                     disabled={isLoading}
                     className="h-11"
+                    aria-label={`Option ${index + 1}`}
                   />
 
                   <Button
@@ -375,15 +400,15 @@ export function CreateDecisionForm({
                       removeOption(option.id)
                     }
                     disabled={
-                      isLoading ||
-                      options.length === 1
+                      isLoading || options.length === 1
                     }
-                    aria-label={`Remove option ${
-                      index + 1
-                    }`}
+                    aria-label={`Remove option ${index + 1}`}
                     className="shrink-0 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                   >
-                    <Trash2 className="size-4" />
+                    <Trash2
+                      className="size-4"
+                      aria-hidden="true"
+                    />
                   </Button>
                 </div>
               ))}
@@ -392,16 +417,24 @@ export function CreateDecisionForm({
 
           <Separator />
 
-          {/* Criteria */}
-          <section className="space-y-4">
+          <section
+            aria-labelledby="criteria-heading"
+            className="space-y-4"
+          >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <div className="rounded-lg bg-primary/10 p-2">
-                  <SlidersHorizontal className="size-5 text-primary" />
+                  <SlidersHorizontal
+                    className="size-5 text-primary"
+                    aria-hidden="true"
+                  />
                 </div>
 
                 <div>
-                  <h2 className="font-semibold">
+                  <h2
+                    id="criteria-heading"
+                    className="font-semibold"
+                  >
                     Criteria
                   </h2>
 
@@ -426,100 +459,96 @@ export function CreateDecisionForm({
             </div>
 
             <div className="space-y-3">
-              {criteria.map(
-                (criterion, index) => (
-                  <div
-                    key={criterion.id}
-                    className="flex flex-col gap-2 rounded-xl border p-3 sm:flex-row sm:items-center"
-                  >
-                    <div className="flex min-w-0 flex-1 items-center gap-2">
-                      <span className="hidden w-6 shrink-0 text-sm text-muted-foreground sm:block">
-                        {index + 1}.
-                      </span>
+              {criteria.map((criterion, index) => (
+                <div
+                  key={criterion.id}
+                  className="flex flex-col gap-2 rounded-xl border border-border p-3 sm:flex-row sm:items-center"
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <span className="hidden w-6 shrink-0 text-sm text-muted-foreground sm:block">
+                      {index + 1}.
+                    </span>
 
+                    <Input
+                      value={criterion.name}
+                      onChange={(event) =>
+                        updateCriterion(
+                          criterion.id,
+                          "name",
+                          event.target.value
+                        )
+                      }
+                      placeholder={`Criterion ${index + 1}`}
+                      disabled={isLoading}
+                      className="h-11"
+                      aria-label={`Criterion ${index + 1}`}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1 sm:w-28 sm:flex-none">
                       <Input
-                        value={criterion.name}
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="1"
+                        value={criterion.weight}
                         onChange={(event) =>
                           updateCriterion(
                             criterion.id,
-                            "name",
-                            event.target.value
+                            "weight",
+                            Number(event.target.value)
                           )
                         }
-                        placeholder={`Criterion ${
-                          index + 1
-                        }`}
                         disabled={isLoading}
-                        className="h-11"
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="relative flex-1 sm:w-28 sm:flex-none">
-                        <Input
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          max="1"
-                          value={criterion.weight}
-                          onChange={(event) =>
-                            updateCriterion(
-                              criterion.id,
-                              "weight",
-                              Number(
-                                event.target.value
-                              )
-                            )
-                          }
-                          disabled={isLoading}
-                          aria-label={`Weight for ${
-                            criterion.name ||
-                            `criterion ${index + 1}`
-                          }`}
-                          className="h-11 pr-12"
-                        />
-
-                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                          weight
-                        </span>
-                      </div>
-
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          removeCriterion(
-                            criterion.id
-                          )
-                        }
-                        disabled={
-                          isLoading ||
-                          criteria.length === 1
-                        }
-                        aria-label={`Remove criterion ${
-                          index + 1
+                        aria-label={`Weight for ${
+                          criterion.name ||
+                          `criterion ${index + 1}`
                         }`}
-                        className="shrink-0 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
+                        className="h-11 pr-12"
+                      />
+
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                        weight
+                      </span>
                     </div>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        removeCriterion(criterion.id)
+                      }
+                      disabled={
+                        isLoading || criteria.length === 1
+                      }
+                      aria-label={`Remove criterion ${
+                        index + 1
+                      }`}
+                      className="shrink-0 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2
+                        className="size-4"
+                        aria-hidden="true"
+                      />
+                    </Button>
                   </div>
-                )
-              )}
+                </div>
+              ))}
             </div>
 
-            {/* Weight summary */}
             <div
-              className={`flex flex-col gap-1 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
+              className={[
+                "flex flex-col gap-1 rounded-xl border p-4",
+                "sm:flex-row sm:items-center sm:justify-between",
                 isWeightValid
                   ? "border-primary/20 bg-primary/5"
-                  : "border-destructive/20 bg-destructive/5"
-              }`}
+                  : "border-destructive/20 bg-destructive/5",
+              ].join(" ")}
             >
               <div>
-                <p className="text-sm font-medium">
+                <p className="text-sm font-medium text-foreground">
                   Total weight
                 </p>
 
@@ -529,11 +558,12 @@ export function CreateDecisionForm({
               </div>
 
               <span
-                className={`text-lg font-bold ${
+                className={[
+                  "text-lg font-bold",
                   isWeightValid
                     ? "text-primary"
-                    : "text-destructive"
-                }`}
+                    : "text-destructive",
+                ].join(" ")}
               >
                 {totalWeight.toFixed(1)} / 1.0
               </span>
@@ -542,7 +572,6 @@ export function CreateDecisionForm({
 
           <Separator />
 
-          {/* Submit */}
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button
               type="button"
@@ -558,7 +587,7 @@ export function CreateDecisionForm({
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full sm:min-w-40 sm:w-auto"
+              className="w-full sm:w-auto sm:min-w-40"
             >
               {isLoading
                 ? mode === "edit"

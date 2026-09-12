@@ -11,8 +11,9 @@ import {
 import { Button } from "@/components/ui/Button";
 
 import { useDecisions } from "../hooks/use-decisions";
-import { DecisionCard } from "./decision-card";
+
 import { CreateDecisionDialog } from "./create-decision-dialog";
+import { DecisionCard } from "./decision-card";
 import { DecisionSearch } from "./decision-search";
 import { DecisionStats } from "./decision-stats";
 
@@ -33,9 +34,7 @@ export function DecisionList() {
     }
 
     return decisions.filter((decision) =>
-      decision.title
-        .toLowerCase()
-        .includes(query)
+      decision.title.toLowerCase().includes(query)
     );
   }, [decisions, search]);
 
@@ -61,12 +60,12 @@ export function DecisionList() {
 
   if (isLoading) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-8" aria-busy="true">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((item) => (
             <div
               key={item}
-              className="h-28 animate-pulse rounded-2xl border bg-muted/40"
+              className="h-28 animate-pulse rounded-2xl border border-border bg-muted/40"
             />
           ))}
         </div>
@@ -81,13 +80,17 @@ export function DecisionList() {
           {[1, 2, 3, 4].map((item) => (
             <div
               key={item}
-              className="h-64 animate-pulse rounded-2xl border bg-muted/40"
+              className="h-64 animate-pulse rounded-2xl border border-border bg-muted/40"
             />
           ))}
         </div>
       </div>
     );
   }
+
+  const hasDecisions = decisions.length > 0;
+  const hasSearch = search.trim().length > 0;
+  const hasResults = filteredDecisions.length > 0;
 
   return (
     <div className="space-y-8">
@@ -97,7 +100,7 @@ export function DecisionList() {
         criteria={totalCriteria}
       />
 
-      <div className="flex flex-col gap-4 rounded-2xl border bg-card p-4 shadow-sm sm:p-5 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5 md:flex-row md:items-center md:justify-between">
         <div className="w-full md:max-w-md">
           <DecisionSearch
             value={search}
@@ -108,7 +111,7 @@ export function DecisionList() {
         <CreateDecisionDialog onCreated={refetch} />
       </div>
 
-      {search.trim() && decisions.length > 0 && (
+      {hasSearch && hasDecisions && (
         <div className="flex items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
             Showing{" "}
@@ -134,33 +137,38 @@ export function DecisionList() {
         </div>
       )}
 
-      {decisions.length === 0 ? (
-        <div className="rounded-2xl border border-dashed bg-card px-6 py-14 text-center sm:px-10">
-          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+      {!hasDecisions ? (
+        <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-14 text-center sm:px-10">
+          <div
+            className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10"
+            aria-hidden="true"
+          >
             <Plus className="size-6 text-primary" />
           </div>
 
-          <h3 className="mt-5 text-xl font-semibold tracking-tight">
+          <h3 className="mt-5 text-xl font-semibold tracking-tight text-foreground">
             No decisions yet
           </h3>
 
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-            Start by creating your first decision.
-            Add the options you are considering and the
-            criteria that matter most.
+            Start by creating your first decision. Add the options
+            you are considering and the criteria that matter most.
           </p>
 
           <div className="mt-6 flex justify-center">
             <CreateDecisionDialog onCreated={refetch} />
           </div>
         </div>
-      ) : filteredDecisions.length === 0 ? (
-        <div className="rounded-2xl border border-dashed bg-card px-6 py-14 text-center sm:px-10">
-          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-muted">
+      ) : !hasResults ? (
+        <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-14 text-center sm:px-10">
+          <div
+            className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-muted"
+            aria-hidden="true"
+          >
             <FileSearch className="size-6 text-muted-foreground" />
           </div>
 
-          <h3 className="mt-5 text-xl font-semibold tracking-tight">
+          <h3 className="mt-5 text-xl font-semibold tracking-tight text-foreground">
             No matching decisions
           </h3>
 
