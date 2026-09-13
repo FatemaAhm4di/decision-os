@@ -17,21 +17,23 @@ type Props = {
   onCreated?: () => void;
 };
 
-export function CreateDecisionDialog({
-  onCreated,
-}: Props) {
+export function CreateDecisionDialog({ onCreated }: Props) {
   const [open, setOpen] = useState(false);
 
+  const handleCreated = () => {
+    onCreated?.();
+    setOpen(false);
+  };
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={setOpen}
-    >
-      <DialogTrigger className="w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-2.5 text-sm sm:text-base">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger
+        className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-auto sm:px-6 sm:py-2.5 sm:text-base"
+      >
         + New Decision
       </DialogTrigger>
 
-      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-3xl mx-auto p-4 sm:p-6 max-h-[90vh] sm:max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] w-[95vw] max-w-3xl overflow-y-auto p-4 sm:max-h-[85vh] sm:p-6">
         <DialogHeader className="space-y-1.5 sm:space-y-2">
           <DialogTitle className="text-lg sm:text-xl md:text-2xl">
             Create Decision
@@ -43,12 +45,7 @@ export function CreateDecisionDialog({
         </DialogHeader>
 
         <div className="mt-4 sm:mt-6">
-          <CreateDecisionForm
-            onCreated={() => {
-              onCreated?.();
-              setOpen(false);
-            }}
-          />
+          <CreateDecisionForm onCreated={handleCreated} />
         </div>
       </DialogContent>
     </Dialog>

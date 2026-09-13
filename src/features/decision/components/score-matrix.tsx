@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+
 import {
   Check,
   Loader2,
@@ -50,17 +51,14 @@ export function ScoreMatrix({
 
     options.forEach((option) => {
       option.scores.forEach((score) => {
-        result[`${option.id}:${score.criterionId}`] =
-          score.value;
+        result[`${option.id}:${score.criterionId}`] = score.value;
       });
     });
 
     return result;
   }, [options]);
 
-  const [scores, setScores] =
-    useState<ScoreMap>(initialScores);
-
+  const [scores, setScores] = useState<ScoreMap>(initialScores);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,8 +105,7 @@ export function ScoreMatrix({
     return options.some((option) =>
       criteria.some(
         (criterion) =>
-          scores[`${option.id}:${criterion.id}`] ===
-          undefined
+          scores[`${option.id}:${criterion.id}`] === undefined
       )
     );
   }
@@ -150,9 +147,7 @@ export function ScoreMatrix({
         }
       );
 
-      const data = await response
-        .json()
-        .catch(() => null);
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
         throw new Error(
@@ -163,10 +158,7 @@ export function ScoreMatrix({
       setIsSaved(true);
       router.refresh();
     } catch (error) {
-      console.error(
-        "Failed to save scores:",
-        error
-      );
+      console.error("Failed to save scores:", error);
 
       setError(
         error instanceof Error
@@ -178,12 +170,9 @@ export function ScoreMatrix({
     }
   }
 
-  if (
-    options.length === 0 ||
-    criteria.length === 0
-  ) {
+  if (options.length === 0 || criteria.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed bg-muted/20 p-8 text-center">
+      <div className="rounded-2xl border border-dashed bg-muted/20 p-6 text-center sm:p-8">
         <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary/10">
           <SlidersHorizontal className="size-5 text-primary" />
         </div>
@@ -193,8 +182,8 @@ export function ScoreMatrix({
         </h3>
 
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Add at least one option and one criterion
-          before entering scores.
+          Add at least one option and one criterion before
+          entering scores.
         </p>
       </div>
     );
@@ -202,21 +191,23 @@ export function ScoreMatrix({
 
   return (
     <div className="space-y-5">
-      <div className="overflow-hidden rounded-2xl border">
+      {/* Desktop */}
+      <div className="hidden overflow-hidden rounded-2xl border md:block">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-sm">
+          <table className="w-full min-w-[680px] border-collapse text-sm">
             <thead className="bg-muted/40">
               <tr className="border-b">
-                <th className="sticky left-0 z-10 min-w-[180px] border-r bg-muted/40 px-4 py-4 text-left font-semibold">
+                <th className="sticky left-0 z-10 min-w-44 border-r bg-muted/40 px-4 py-4 text-left font-semibold">
                   Option
                 </th>
+
                 {criteria.map((criterion) => (
                   <th
                     key={criterion.id}
-                    className="min-w-[150px] px-4 py-4 text-left"
+                    className="min-w-36 px-4 py-4 text-left"
                   >
                     <div className="space-y-1">
-                      <p className="font-semibold">
+                      <p className="break-words font-semibold">
                         {criterion.name}
                       </p>
 
@@ -236,7 +227,7 @@ export function ScoreMatrix({
                   className="border-b transition-colors last:border-b-0 hover:bg-muted/20"
                 >
                   <td className="sticky left-0 z-10 border-r bg-background px-4 py-4">
-                    <span className="font-medium">
+                    <span className="break-words font-medium">
                       {option.name}
                     </span>
                   </td>
@@ -283,17 +274,90 @@ export function ScoreMatrix({
         </div>
       </div>
 
+      {/* Mobile */}
+      <div className="space-y-4 md:hidden">
+        {options.map((option) => (
+          <section
+            key={option.id}
+            className="overflow-hidden rounded-2xl border bg-card"
+            aria-labelledby={`option-${option.id}`}
+          >
+            <div className="border-b bg-muted/30 px-4 py-4">
+              <h3
+                id={`option-${option.id}`}
+                className="break-words text-base font-semibold text-foreground"
+              >
+                {option.name}
+              </h3>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Rate this option for each criterion
+              </p>
+            </div>
+
+            <div className="divide-y">
+              {criteria.map((criterion) => {
+                const key = `${option.id}:${criterion.id}`;
+
+                return (
+                  <div
+                    key={criterion.id}
+                    className="flex items-center justify-between gap-4 px-4 py-4"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="break-words text-sm font-medium text-foreground">
+                        {criterion.name}
+                      </p>
+
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Weight: {criterion.weight}
+                      </p>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={10}
+                        step={1}
+                        inputMode="numeric"
+                        value={scores[key] ?? ""}
+                        onChange={(event) =>
+                          handleChange(
+                            option.id,
+                            criterion.id,
+                            event.target.value
+                          )
+                        }
+                        disabled={isSaving}
+                        aria-label={`${option.name} score for ${criterion.name}`}
+                        className="h-10 w-16 text-center font-medium"
+                      />
+
+                      <span className="text-xs text-muted-foreground">
+                        / 10
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      {/* Status + Save */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-h-5 text-sm">
           {error && (
-            <p className="text-destructive">
+            <p className="leading-5 text-destructive">
               {error}
             </p>
           )}
 
           {isSaved && !error && (
             <p className="flex items-center gap-1.5 text-primary">
-              <Check className="size-4" />
+              <Check className="size-4 shrink-0" />
               Scores saved successfully.
             </p>
           )}
