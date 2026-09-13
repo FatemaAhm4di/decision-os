@@ -32,9 +32,7 @@ export function useDecisionForm({
 }: UseDecisionFormProps) {
   const [title, setTitle] = useState(initialTitle);
 
-  const [options, setOptions] = useState<
-    DecisionOption[]
-  >(
+  const [options, setOptions] = useState<DecisionOption[]>(
     initialOptions ?? [
       {
         id: crypto.randomUUID(),
@@ -43,9 +41,7 @@ export function useDecisionForm({
     ]
   );
 
-  const [criteria, setCriteria] = useState<
-    DecisionCriterion[]
-  >(
+  const [criteria, setCriteria] = useState<DecisionCriterion[]>(
     initialCriteria ?? [
       {
         id: crypto.randomUUID(),
@@ -56,35 +52,48 @@ export function useDecisionForm({
   );
 
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(
-    null
+  const [error, setError] = useState<string | null>(null);
+
+  const validOptions = useMemo(
+    () =>
+      options.filter(
+        (option) => option.name.trim().length > 0
+      ),
+    [options]
+  );
+
+  const validCriteria = useMemo(
+    () =>
+      criteria.filter(
+        (criterion) => criterion.name.trim().length > 0
+      ),
+    [criteria]
   );
 
   const totalWeight = useMemo(
     () =>
-      criteria.reduce(
-        (sum, criterion) =>
-          sum + criterion.weight,
+      validCriteria.reduce(
+        (sum, criterion) => sum + criterion.weight,
         0
       ),
-    [criteria]
+    [validCriteria]
   );
 
   const roundedTotalWeight = Number(
     totalWeight.toFixed(2)
   );
 
-  const isWeightValid =
-    Math.abs(roundedTotalWeight - 1) <= 0.001;
-
-  const hasValidOptions = options.some(
-    (option) => option.name.trim().length > 0
-  );
-
-  const hasValidCriteria = criteria.some(
+  const hasValidWeights = validCriteria.every(
     (criterion) =>
-      criterion.name.trim().length > 0
+      Number.isFinite(criterion.weight) &&
+      criterion.weight >= 0 &&
+      criterion.weight <= 1
   );
+
+  const isWeightValid =
+    validCriteria.length > 0 &&
+    hasValidWeights &&
+    Math.abs(totalWeight - 1) <= 0.001;
 
   function clearError() {
     setError(null);
@@ -104,9 +113,7 @@ export function useDecisionForm({
 
   function removeOption(id: string) {
     if (options.length <= 1) {
-      setError(
-        "At least one option is required."
-      );
+      setError("At least one option is required.");
       return;
     }
 
@@ -117,10 +124,7 @@ export function useDecisionForm({
     clearError();
   }
 
-  function updateOption(
-    id: string,
-    name: string
-  ) {
+  function updateOption(id: string, name: string) {
     setOptions((prev) =>
       prev.map((option) =>
         option.id === id
@@ -150,9 +154,7 @@ export function useDecisionForm({
 
   function removeCriterion(id: string) {
     if (criteria.length <= 1) {
-      setError(
-        "At least one criterion is required."
-      );
+      setError("At least one criterion is required.");
       return;
     }
 
@@ -188,25 +190,21 @@ export function useDecisionForm({
     const trimmedTitle = title.trim();
 
     if (!trimmedTitle) {
-      setError(
-        "Please enter a decision title."
-      );
+      setError("Please enter a decision title.");
       return null;
     }
 
-    if (!hasValidOptions) {
+    if (validOptions.length === 0) {
       setError("Add at least one option.");
       return null;
     }
 
-    if (!hasValidCriteria) {
-      setError(
-        "Add at least one criterion."
-      );
+    if (validCriteria.length === 0) {
+      setError("Add at least one criterion.");
       return null;
     }
 
-    const hasInvalidWeight = criteria.some(
+    const hasInvalidWeight = validCriteria.some(
       (criterion) =>
         !Number.isFinite(criterion.weight) ||
         criterion.weight < 0 ||
@@ -222,33 +220,31 @@ export function useDecisionForm({
 
     if (!isWeightValid) {
       setError(
-        `Criteria weights must equal 1. Current total: ${roundedTotalWeight}`
+        `Criteria weights must equal 1. Current total: ${roundedTotalWeight.toFixed(
+          2
+        )}`
       );
+      return null;
+    }
+
+    if (mode === "edit" && !decisionId) {
+      setError("Decision ID is missing.");
       return null;
     }
 
     return {
       title: trimmedTitle,
-      options: options
-        .filter(
-          (option) => option.name.trim()
-        )
-        .map((option) => ({
-          id: option.id,
-          name: option.name.trim(),
-        })),
-      criteria: criteria
-        .filter(
-          (criterion) =>
-            criterion.name.trim()
-        )
-        .map((criterion) => ({
-          id: criterion.id,
-          name: criterion.name.trim(),
-          weight: Number(
-            criterion.weight.toFixed(2)
-          ),
-        })),
+
+      options: validOptions.map((option) => ({
+        id: option.id,
+        name: option.name.trim(),
+      })),
+
+      criteria: validCriteria.map((criterion) => ({
+        id: criterion.id,
+        name: criterion.name.trim(),
+        weight: Number(criterion.weight.toFixed(2)),
+      })),
     };
   }
 
@@ -268,8 +264,7 @@ export function useDecisionForm({
           ? `/api/decision/${decisionId}`
           : "/api/decision";
 
-      const method =
-        mode === "edit" ? "PUT" : "POST";
+      const method = mode === "edit" ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
@@ -285,8 +280,7 @@ export function useDecisionForm({
 
       if (!response.ok) {
         throw new Error(
-          data?.message ??
-            "Unable to save decision."
+          data?.message ?? "Unable to save decision."
         );
       }
 
@@ -328,6 +322,8 @@ export function useDecisionForm({
         weight: 1,
       },
     ]);
+
+    setError(null);
   }
 
   return {
