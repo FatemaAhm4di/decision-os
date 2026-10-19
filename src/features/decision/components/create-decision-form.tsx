@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-
 import {
   ArrowLeft,
   FolderKanban,
@@ -25,22 +23,17 @@ import {
   CardTitle,
 } from "@/components/ui/Card";
 
-type Option = {
-  id: string;
-  name: string;
-};
-
-type Criterion = {
-  id: string;
-  name: string;
-  weight: number;
-};
+import {
+  useDecisionForm,
+  type DecisionCriterion,
+  type DecisionOption,
+} from "../hooks/use-decision-form";
 
 type Props = {
   onCreated?: () => void;
   initialTitle?: string;
-  initialOptions?: Option[];
-  initialCriteria?: Criterion[];
+  initialOptions?: DecisionOption[];
+  initialCriteria?: DecisionCriterion[];
   mode?: "create" | "edit";
   decisionId?: string;
 };
@@ -55,220 +48,37 @@ export function CreateDecisionForm({
 }: Props) {
   const router = useRouter();
 
-  const [title, setTitle] = useState(initialTitle);
-
-  const [options, setOptions] = useState<Option[]>(
-    initialOptions ?? [
-      {
-        id: crypto.randomUUID(),
-        name: "",
-      },
-    ]
-  );
-
-  const [criteria, setCriteria] = useState<Criterion[]>(
-    initialCriteria ?? [
-      {
-        id: crypto.randomUUID(),
-        name: "",
-        weight: 1,
-      },
-    ]
-  );
-
-  const [isLoading, setIsLoading] = useState(false);
-
-  const namedCriteria = criteria.filter(
-    (criterion) => criterion.name.trim() !== ""
-  );
-
-  const totalWeight = namedCriteria.reduce(
-    (sum, criterion) => sum + criterion.weight,
-    0
-  );
-
-  const hasValidWeights = namedCriteria.every(
-    (criterion) =>
-      Number.isFinite(criterion.weight) &&
-      criterion.weight >= 0 &&
-      criterion.weight <= 1
-  );
-
-  const isWeightValid =
-    namedCriteria.length > 0 &&
-    hasValidWeights &&
-    Math.abs(totalWeight - 1) <= 0.001;
-
-  function addOption() {
-    setOptions((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        name: "",
-      },
-    ]);
-  }
-
-  function removeOption(id: string) {
-    setOptions((prev) =>
-      prev.filter((option) => option.id !== id)
-    );
-  }
-
-  function updateOption(id: string, name: string) {
-    setOptions((prev) =>
-      prev.map((option) =>
-        option.id === id
-          ? {
-              ...option,
-              name,
-            }
-          : option
-      )
-    );
-  }
-
-  function addCriterion() {
-    setCriteria((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        name: "",
-        weight: 0,
-      },
-    ]);
-  }
-
-  function removeCriterion(id: string) {
-    setCriteria((prev) =>
-      prev.filter((criterion) => criterion.id !== id)
-    );
-  }
-
-  function updateCriterion(
-    id: string,
-    field: "name" | "weight",
-    value: string | number
-  ) {
-    setCriteria((prev) =>
-      prev.map((criterion) =>
-        criterion.id === id
-          ? {
-              ...criterion,
-              [field]: value,
-            }
-          : criterion
-      )
-    );
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const trimmedTitle = title.trim();
-
-    if (!trimmedTitle) {
-      alert("Please enter a decision title.");
-      return;
-    }
-
-    const validOptions = options.filter(
-      (option) => option.name.trim() !== ""
-    );
-
-    if (validOptions.length === 0) {
-      alert("Add at least one option.");
-      return;
-    }
-
-    const validCriteria = criteria.filter(
-      (criterion) => criterion.name.trim() !== ""
-    );
-
-    if (validCriteria.length === 0) {
-      alert("Add at least one criterion.");
-      return;
-    }
-
-    const hasInvalidWeight = validCriteria.some(
-      (criterion) =>
-        !Number.isFinite(criterion.weight) ||
-        criterion.weight < 0 ||
-        criterion.weight > 1
-    );
-
-    if (hasInvalidWeight) {
-      alert("Each criterion weight must be between 0 and 1.");
-      return;
-    }
-
-    const total = validCriteria.reduce(
-      (sum, criterion) => sum + criterion.weight,
-      0
-    );
-
-    if (Math.abs(total - 1) > 0.001) {
-      alert(
-        `Criteria weights must equal 1.\nCurrent total: ${total.toFixed(
-          2
-        )}`
-      );
-      return;
-    }
-
-    if (mode === "edit" && !decisionId) {
-      alert("Decision ID is missing.");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const url =
-        mode === "edit"
-          ? `/api/decision/${decisionId}`
-          : "/api/decision";
-
-      const method = mode === "edit" ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: trimmedTitle,
-          options: validOptions,
-          criteria: validCriteria,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => null);
-
-        throw new Error(
-          data?.message || "Failed to save decision."
-        );
-      }
-
-      await response.json();
-
+  const {
+    title,
+    setTitle,
+    options,
+    criteria,
+    isLoading,
+    error,
+    totalWeight,
+    isWeightValid,
+    addOption,
+    removeOption,
+    updateOption,
+    addCriterion,
+    removeCriterion,
+    updateCriterion,
+    submit,
+  } = useDecisionForm({
+    initialTitle,
+    initialOptions,
+    initialCriteria,
+    mode,
+    decisionId,
+    onCreated: () => {
       onCreated?.();
 
-      router.push("/");
-      router.refresh();
-    } catch (error) {
-      console.error("Failed to save decision:", error);
-
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Something went wrong."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }
+      if (!onCreated) {
+        router.push("/");
+        router.refresh();
+      }
+    },
+  });
 
   function handleBackToHome() {
     if (isLoading) {
@@ -283,7 +93,10 @@ export function CreateDecisionForm({
       <CardHeader className="space-y-5">
         <div className="flex items-start gap-4">
           <div className="shrink-0 rounded-xl bg-primary/10 p-3 ring-1 ring-primary/10">
-            <FolderKanban className="size-6 text-primary" />
+            <FolderKanban
+              className="size-6 text-primary"
+              aria-hidden="true"
+            />
           </div>
 
           <div className="min-w-0">
@@ -306,20 +119,28 @@ export function CreateDecisionForm({
 
       <CardContent>
         <form
-          onSubmit={handleSubmit}
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submit();
+          }}
           className="space-y-8"
         >
+          {error && (
+            <div
+              role="alert"
+              className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+            >
+              {error}
+            </div>
+          )}
+
           <div className="space-y-2">
-            <Label htmlFor="title">
-              Decision Title
-            </Label>
+            <Label htmlFor="title">Decision Title</Label>
 
             <Input
               id="title"
               value={title}
-              onChange={(event) =>
-                setTitle(event.target.value)
-              }
+              onChange={(event) => setTitle(event.target.value)}
               placeholder="e.g. Which laptop should I buy?"
               disabled={isLoading}
               className="h-11"
@@ -396,9 +217,7 @@ export function CreateDecisionForm({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    onClick={() =>
-                      removeOption(option.id)
-                    }
+                    onClick={() => removeOption(option.id)}
                     disabled={
                       isLoading || options.length === 1
                     }
