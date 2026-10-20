@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
+
 import { ScoreMatrix } from "@/features/decision/components/score-matrix";
 import { calculateDecision } from "@/lib/engine/calculate";
 import { getDecision } from "@/lib/decision/get-decision";
@@ -36,14 +37,63 @@ export default async function DecisionPage({
 }: PageProps) {
   const { id } = await params;
 
-  const decision = await getDecision(id);
+  let decision: Decision | null = null;
+
+  try {
+    decision = await getDecision(id);
+  } catch (error) {
+    console.error("Failed to load decision:", error);
+
+    return (
+      <Card className="mx-auto max-w-xl">
+        <CardContent className="flex flex-col items-center p-8 text-center sm:p-10">
+          <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
+            <CircleAlert
+              className="size-6 text-destructive"
+              aria-hidden="true"
+            />
+          </div>
+
+          <h1 className="mt-5 text-2xl font-semibold tracking-tight text-foreground">
+            Unable to load decision
+          </h1>
+
+          <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+            Something went wrong while loading this decision.
+            Please try again.
+          </p>
+
+          <div className="mt-6 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <Link href="/decision" className="w-full sm:w-auto">
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                <ArrowLeft className="mr-2 size-4" />
+                Back to decisions
+              </Button>
+            </Link>
+
+            <Link href={`/decision/${id}`} className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto">
+                Try again
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!decision) {
     return (
       <Card className="mx-auto max-w-xl">
         <CardContent className="flex flex-col items-center p-8 text-center sm:p-10">
           <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
-            <CircleAlert className="size-6 text-destructive" />
+            <CircleAlert
+              className="size-6 text-destructive"
+              aria-hidden="true"
+            />
           </div>
 
           <h1 className="mt-5 text-2xl font-semibold tracking-tight text-foreground">
@@ -51,8 +101,8 @@ export default async function DecisionPage({
           </h1>
 
           <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-            The decision you are looking for does not exist or may
-            have been removed.
+            The decision you are looking for does not exist or
+            may have been removed.
           </p>
 
           <Link href="/decision" className="mt-6">
@@ -77,6 +127,9 @@ export default async function DecisionPage({
   const hasCompleteScores =
     expectedScoreCount > 0 &&
     actualScoreCount === expectedScoreCount;
+
+  const hasOptions = decision.options.length > 0;
+  const hasCriteria = decision.criteria.length > 0;
 
   const results = hasCompleteScores
     ? calculateDecision(decision)
@@ -133,6 +186,36 @@ export default async function DecisionPage({
         </div>
       </section>
 
+      {/* Setup warning */}
+      {(!hasOptions || !hasCriteria) && (
+        <Card className="border-destructive/20 bg-destructive/5">
+          <CardContent className="flex items-start gap-3 p-5">
+            <CircleAlert
+              className="mt-0.5 size-5 shrink-0 text-destructive"
+              aria-hidden="true"
+            />
+
+            <div className="min-w-0">
+              <h2 className="font-semibold text-foreground">
+                This decision is not ready to score
+              </h2>
+
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                Add at least one option and one criterion before
+                entering scores.
+              </p>
+
+              <Link
+                href={`/decision/${decision.id}/edit`}
+                className="mt-3 inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Edit decision
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Recommended option */}
       {winner && (
         <Card className="overflow-hidden border-primary/20 bg-primary/[0.03]">
@@ -180,7 +263,7 @@ export default async function DecisionPage({
 
           <CardContent>
             <div className="space-y-3">
-              {decision.options.length > 0 ? (
+              {hasOptions ? (
                 decision.options.map((option) => (
                   <div
                     key={option.id}
@@ -192,9 +275,16 @@ export default async function DecisionPage({
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  No options added yet.
-                </p>
+                <div className="rounded-xl border border-dashed border-border bg-muted/20 p-5">
+                  <p className="font-medium text-foreground">
+                    No options added yet.
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    Add options before you can compare this
+                    decision.
+                  </p>
+                </div>
               )}
             </div>
           </CardContent>
@@ -210,7 +300,7 @@ export default async function DecisionPage({
 
           <CardContent>
             <div className="space-y-3">
-              {decision.criteria.length > 0 ? (
+              {hasCriteria ? (
                 decision.criteria.map((criterion) => (
                   <div
                     key={criterion.id}
@@ -226,9 +316,16 @@ export default async function DecisionPage({
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  No criteria added yet.
-                </p>
+                <div className="rounded-xl border border-dashed border-border bg-muted/20 p-5">
+                  <p className="font-medium text-foreground">
+                    No criteria added yet.
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    Add criteria and assign weights before
+                    scoring this decision.
+                  </p>
+                </div>
               )}
             </div>
           </CardContent>
@@ -269,7 +366,9 @@ export default async function DecisionPage({
                     "flex items-center justify-between gap-4 rounded-xl",
                     "border border-border p-4 transition-colors",
                     "hover:bg-muted/40",
-                    index === 0 ? "border-primary/20 bg-primary/[0.03]" : "",
+                    index === 0
+                      ? "border-primary/20 bg-primary/[0.03]"
+                      : "",
                   ].join(" ")}
                 >
                   <div className="flex min-w-0 items-center gap-3">
@@ -299,12 +398,15 @@ export default async function DecisionPage({
           ) : (
             <div className="rounded-xl border border-dashed border-border bg-muted/20 p-6 text-center">
               <p className="font-medium text-foreground">
-                Complete the score matrix
+                {hasOptions && hasCriteria
+                  ? "Complete the score matrix"
+                  : "Complete your decision setup"}
               </p>
 
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Rate every option for every criterion to see the
-                final ranking.
+                {hasOptions && hasCriteria
+                  ? "Rate every option for every criterion to see the final ranking."
+                  : "Add at least one option and one criterion before scoring this decision."}
               </p>
             </div>
           )}
