@@ -1,6 +1,8 @@
+
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export type DecisionOption = {
   id: string;
@@ -30,6 +32,8 @@ export function useDecisionForm({
   decisionId,
   onCreated,
 }: UseDecisionFormProps) {
+  const router = useRouter();
+
   const [title, setTitle] = useState(initialTitle);
 
   const [options, setOptions] = useState<DecisionOption[]>(
@@ -55,10 +59,7 @@ export function useDecisionForm({
   const [error, setError] = useState<string | null>(null);
 
   const validOptions = useMemo(
-    () =>
-      options.filter(
-        (option) => option.name.trim().length > 0
-      ),
+    () => options.filter((option) => option.name.trim().length > 0),
     [options]
   );
 
@@ -79,9 +80,7 @@ export function useDecisionForm({
     [validCriteria]
   );
 
-  const roundedTotalWeight = Number(
-    totalWeight.toFixed(2)
-  );
+  const roundedTotalWeight = Number(totalWeight.toFixed(2));
 
   const hasValidWeights = validCriteria.every(
     (criterion) =>
@@ -127,12 +126,7 @@ export function useDecisionForm({
   function updateOption(id: string, name: string) {
     setOptions((prev) =>
       prev.map((option) =>
-        option.id === id
-          ? {
-              ...option,
-              name,
-            }
-          : option
+        option.id === id ? { ...option, name } : option
       )
     );
 
@@ -159,9 +153,7 @@ export function useDecisionForm({
     }
 
     setCriteria((prev) =>
-      prev.filter(
-        (criterion) => criterion.id !== id
-      )
+      prev.filter((criterion) => criterion.id !== id)
     );
 
     clearError();
@@ -175,10 +167,7 @@ export function useDecisionForm({
     setCriteria((prev) =>
       prev.map((criterion) =>
         criterion.id === id
-          ? {
-              ...criterion,
-              [field]: value,
-            }
+          ? { ...criterion, [field]: value }
           : criterion
       )
     );
@@ -212,17 +201,13 @@ export function useDecisionForm({
     );
 
     if (hasInvalidWeight) {
-      setError(
-        "Each criterion weight must be between 0 and 1."
-      );
+      setError("Each criterion weight must be between 0 and 1.");
       return null;
     }
 
     if (!isWeightValid) {
       setError(
-        `Criteria weights must equal 1. Current total: ${roundedTotalWeight.toFixed(
-          2
-        )}`
+        `Criteria weights must equal 1. Current total: ${roundedTotalWeight.toFixed(2)}`
       );
       return null;
     }
@@ -234,12 +219,10 @@ export function useDecisionForm({
 
     return {
       title: trimmedTitle,
-
       options: validOptions.map((option) => ({
         id: option.id,
         name: option.name.trim(),
       })),
-
       criteria: validCriteria.map((criterion) => ({
         id: criterion.id,
         name: criterion.name.trim(),
@@ -274,9 +257,7 @@ export function useDecisionForm({
         body: JSON.stringify(payload),
       });
 
-      const data = await response
-        .json()
-        .catch(() => null);
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
         throw new Error(
@@ -289,11 +270,18 @@ export function useDecisionForm({
       }
 
       onCreated?.();
+
+      if (!onCreated) {
+        if (mode === "edit" && decisionId) {
+          router.push(`/decision/${decisionId}`);
+        } else {
+          router.push("/");
+        }
+
+        router.refresh();
+      }
     } catch (error) {
-      console.error(
-        "Failed to save decision:",
-        error
-      );
+      console.error("Failed to save decision:", error);
 
       setError(
         error instanceof Error
@@ -329,25 +317,19 @@ export function useDecisionForm({
   return {
     title,
     setTitle,
-
     options,
     criteria,
-
     isLoading,
     error,
-
     totalWeight,
     roundedTotalWeight,
     isWeightValid,
-
     addOption,
     removeOption,
     updateOption,
-
     addCriterion,
     removeCriterion,
     updateCriterion,
-
     submit,
   };
 }
