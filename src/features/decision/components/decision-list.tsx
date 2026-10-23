@@ -6,6 +6,7 @@ import {
   FileSearch,
   Plus,
   RotateCcw,
+  TriangleAlert,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -21,6 +22,7 @@ export function DecisionList() {
   const {
     decisions,
     isLoading,
+    error,
     refetch,
   } = useDecisions();
 
@@ -60,7 +62,11 @@ export function DecisionList() {
 
   if (isLoading) {
     return (
-      <div className="space-y-8" aria-busy="true">
+      <div
+        className="space-y-8"
+        aria-busy="true"
+        aria-live="polite"
+      >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((item) => (
             <div
@@ -84,6 +90,38 @@ export function DecisionList() {
             />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-14 text-center sm:px-10">
+        <div
+          className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive"
+          aria-hidden="true"
+        >
+          <TriangleAlert className="size-6" />
+        </div>
+
+        <h2 className="mt-5 text-xl font-semibold tracking-tight">
+          Unable to load decisions
+        </h2>
+
+        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+          We couldn&apos;t load your decisions right now.
+          Please try again.
+        </p>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-6"
+          onClick={refetch}
+        >
+          <RotateCcw className="size-4" />
+          Try again
+        </Button>
       </div>
     );
   }
@@ -146,13 +184,14 @@ export function DecisionList() {
             <Plus className="size-6 text-primary" />
           </div>
 
-          <h3 className="mt-5 text-xl font-semibold tracking-tight text-foreground">
+          <h2 className="mt-5 text-xl font-semibold tracking-tight text-foreground">
             No decisions yet
-          </h3>
+          </h2>
 
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-            Start by creating your first decision. Add the options
-            you are considering and the criteria that matter most.
+            Start by creating your first decision. Add the
+            options you are considering and the criteria that
+            matter most.
           </p>
 
           <div className="mt-6 flex justify-center">
@@ -168,14 +207,14 @@ export function DecisionList() {
             <FileSearch className="size-6 text-muted-foreground" />
           </div>
 
-          <h3 className="mt-5 text-xl font-semibold tracking-tight text-foreground">
+          <h2 className="mt-5 text-xl font-semibold tracking-tight text-foreground">
             No matching decisions
-          </h3>
+          </h2>
 
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
             Nothing matches{" "}
             <span className="font-medium text-foreground">
-              “{search.trim()}”
+              &quot;{search.trim()}&quot;
             </span>
             . Try a different keyword.
           </p>

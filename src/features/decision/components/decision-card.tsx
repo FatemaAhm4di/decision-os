@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
+
 import { DeleteDecisionButton } from "./delete-decision-button";
 
 type DecisionCardDecision = {
@@ -88,10 +89,13 @@ export function DecisionCard({
                 <CheckCircle2
                   className="size-6 transition-transform duration-300 group-hover:rotate-6"
                   strokeWidth={2}
+                  aria-hidden="true"
                 />
               ) : (
                 <FolderKanban
                   className="size-6 transition-transform duration-300 group-hover:rotate-6"
+                  strokeWidth={2}
+                  aria-hidden="true"
                 />
               )}
             </div>
@@ -107,9 +111,15 @@ export function DecisionCard({
                 ].join(" ")}
               >
                 {isCompleted ? (
-                  <CheckCircle2 className="size-3.5" />
+                  <CheckCircle2
+                    className="size-3.5"
+                    aria-hidden="true"
+                  />
                 ) : (
-                  <Sparkles className="size-3.5" />
+                  <Sparkles
+                    className="size-3.5"
+                    aria-hidden="true"
+                  />
                 )}
 
                 {isCompleted ? "Completed" : "In progress"}
@@ -125,7 +135,11 @@ export function DecisionCard({
               </CardTitle>
 
               <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                <CalendarDays className="size-4 shrink-0" />
+                <CalendarDays
+                  className="size-4 shrink-0"
+                  aria-hidden="true"
+                />
+
                 <span>{createdAt}</span>
               </div>
             </div>
@@ -141,7 +155,10 @@ export function DecisionCard({
               "transition-all duration-300 group-hover:bg-muted/50",
             ].join(" ")}
           >
-            <ListTodo className="mb-4 size-5 text-primary" />
+            <ListTodo
+              className="mb-4 size-5 text-primary"
+              aria-hidden="true"
+            />
 
             <p className="text-3xl font-bold text-foreground">
               {optionCount}
@@ -158,7 +175,10 @@ export function DecisionCard({
               "transition-all duration-300 group-hover:bg-muted/50",
             ].join(" ")}
           >
-            <SlidersHorizontal className="mb-4 size-5 text-primary" />
+            <SlidersHorizontal
+              className="mb-4 size-5 text-primary"
+              aria-hidden="true"
+            />
 
             <p className="text-3xl font-bold text-foreground">
               {criterionCount}
@@ -179,6 +199,7 @@ export function DecisionCard({
                   ? "bg-primary/10 text-primary"
                   : "bg-muted text-muted-foreground",
               ].join(" ")}
+              aria-hidden="true"
             >
               {isCompleted ? (
                 <CheckCircle2 className="size-5" />
@@ -216,6 +237,7 @@ export function DecisionCard({
                   "ml-2 size-4 transition-transform duration-300",
                   "group-hover:translate-x-1",
                 ].join(" ")}
+                aria-hidden="true"
               />
             </Button>
           </Link>
