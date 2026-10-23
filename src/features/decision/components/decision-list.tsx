@@ -18,7 +18,13 @@ import { DecisionCard } from "./decision-card";
 import { DecisionSearch } from "./decision-search";
 import { DecisionStats } from "./decision-stats";
 
-export function DecisionList() {
+type DecisionListProps = {
+  compact?: boolean;
+};
+
+export function DecisionList({
+  compact = false,
+}: DecisionListProps) {
   const {
     decisions,
     isLoading,
@@ -39,6 +45,14 @@ export function DecisionList() {
       decision.title.toLowerCase().includes(query)
     );
   }, [decisions, search]);
+
+  const visibleDecisions = useMemo(() => {
+    if (compact) {
+      return filteredDecisions.slice(0, 3);
+    }
+
+    return filteredDecisions;
+  }, [compact, filteredDecisions]);
 
   const totalOptions = useMemo(
     () =>
@@ -67,23 +81,27 @@ export function DecisionList() {
         aria-busy="true"
         aria-live="polite"
       >
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((item) => (
-            <div
-              key={item}
-              className="h-28 animate-pulse rounded-2xl border border-border bg-muted/40"
-            />
-          ))}
-        </div>
+        {!compact && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((item) => (
+              <div
+                key={item}
+                className="h-28 animate-pulse rounded-2xl border border-border bg-muted/40"
+              />
+            ))}
+          </div>
+        )}
 
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="h-10 w-full animate-pulse rounded-lg bg-muted md:max-w-md" />
+        {!compact && (
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="h-10 w-full animate-pulse rounded-lg bg-muted md:max-w-md" />
 
-          <div className="h-10 w-full animate-pulse rounded-lg bg-muted md:w-40" />
-        </div>
+            <div className="h-10 w-full animate-pulse rounded-lg bg-muted md:w-40" />
+          </div>
+        )}
 
         <div className="grid gap-5 md:grid-cols-2">
-          {[1, 2, 3, 4].map((item) => (
+          {[1, 2, 3].map((item) => (
             <div
               key={item}
               className="h-64 animate-pulse rounded-2xl border border-border bg-muted/40"
@@ -96,7 +114,7 @@ export function DecisionList() {
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-14 text-center sm:px-10">
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-12 text-center sm:px-10">
         <div
           className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive"
           aria-hidden="true"
@@ -117,7 +135,7 @@ export function DecisionList() {
           type="button"
           variant="outline"
           className="mt-6"
-          onClick={refetch}
+          onClick={() => void refetch()}
         >
           <RotateCcw className="size-4" />
           Try again
@@ -128,54 +146,84 @@ export function DecisionList() {
 
   const hasDecisions = decisions.length > 0;
   const hasSearch = search.trim().length > 0;
-  const hasResults = filteredDecisions.length > 0;
+  const hasResults = visibleDecisions.length > 0;
+
+  if (compact && !hasDecisions) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-12 text-center sm:px-10">
+        <div
+          className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10"
+          aria-hidden="true"
+        >
+          <Plus className="size-6 text-primary" />
+        </div>
+
+        <h3 className="mt-5 text-xl font-semibold tracking-tight text-foreground">
+          No decisions yet
+        </h3>
+
+        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+          Create your first decision to start comparing options
+          and criteria.
+        </p>
+
+        <div className="mt-6 flex justify-center">
+          <CreateDecisionDialog onCreated={refetch} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
-      <DecisionStats
-        decisions={decisions.length}
-        options={totalOptions}
-        criteria={totalCriteria}
-      />
-
-      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5 md:flex-row md:items-center md:justify-between">
-        <div className="w-full md:max-w-md">
-          <DecisionSearch
-            value={search}
-            onChange={setSearch}
+      {!compact && (
+        <>
+          <DecisionStats
+            decisions={decisions.length}
+            options={totalOptions}
+            criteria={totalCriteria}
           />
-        </div>
 
-        <CreateDecisionDialog onCreated={refetch} />
-      </div>
+          <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5 md:flex-row md:items-center md:justify-between">
+            <div className="w-full md:max-w-md">
+              <DecisionSearch
+                value={search}
+                onChange={setSearch}
+              />
+            </div>
 
-      {hasSearch && hasDecisions && (
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            Showing{" "}
-            <span className="font-medium text-foreground">
-              {filteredDecisions.length}
-            </span>{" "}
-            of{" "}
-            <span className="font-medium text-foreground">
-              {decisions.length}
-            </span>{" "}
-            decisions
-          </p>
+            <CreateDecisionDialog onCreated={refetch} />
+          </div>
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setSearch("")}
-            className="shrink-0"
-          >
-            Clear search
-          </Button>
-        </div>
+          {hasSearch && hasDecisions && (
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm text-muted-foreground">
+                Showing{" "}
+                <span className="font-medium text-foreground">
+                  {filteredDecisions.length}
+                </span>{" "}
+                of{" "}
+                <span className="font-medium text-foreground">
+                  {decisions.length}
+                </span>{" "}
+                decisions
+              </p>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearch("")}
+                className="shrink-0"
+              >
+                Clear search
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
-      {!hasDecisions ? (
+      {!compact && !hasDecisions ? (
         <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-14 text-center sm:px-10">
           <div
             className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10"
@@ -184,9 +232,9 @@ export function DecisionList() {
             <Plus className="size-6 text-primary" />
           </div>
 
-          <h2 className="mt-5 text-xl font-semibold tracking-tight text-foreground">
+          <h3 className="mt-5 text-xl font-semibold tracking-tight text-foreground">
             No decisions yet
-          </h2>
+          </h3>
 
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
             Start by creating your first decision. Add the
@@ -207,9 +255,9 @@ export function DecisionList() {
             <FileSearch className="size-6 text-muted-foreground" />
           </div>
 
-          <h2 className="mt-5 text-xl font-semibold tracking-tight text-foreground">
+          <h3 className="mt-5 text-xl font-semibold tracking-tight text-foreground">
             No matching decisions
-          </h2>
+          </h3>
 
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
             Nothing matches{" "}
@@ -231,7 +279,7 @@ export function DecisionList() {
         </div>
       ) : (
         <div className="grid gap-5 md:grid-cols-2">
-          {filteredDecisions.map((decision) => (
+          {visibleDecisions.map((decision) => (
             <DecisionCard
               key={decision.id}
               decision={decision}

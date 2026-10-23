@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { ArrowRight, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -24,8 +25,8 @@ export default function RecentDecisions() {
           </h2>
 
           <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
-            Review your latest decisions and continue working on the
-            choices that matter.
+            Review your latest decisions and continue working on
+            the choices that matter.
           </p>
         </div>
 
@@ -36,20 +37,26 @@ export default function RecentDecisions() {
               className="w-full sm:w-auto"
             >
               View all
-              <ArrowRight className="size-4" />
+              <ArrowRight
+                className="size-4"
+                aria-hidden="true"
+              />
             </Button>
           </Link>
 
           <Link href="/decision/new">
             <Button className="w-full sm:w-auto">
-              <Plus className="size-4" />
+              <Plus
+                className="size-4"
+                aria-hidden="true"
+              />
               New Decision
             </Button>
           </Link>
         </div>
       </div>
 
-      <DecisionList />
+      <DecisionList compact />
     </section>
   );
 }

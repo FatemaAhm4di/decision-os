@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import {
   ArrowRight,
   CheckCircle2,
@@ -18,7 +19,10 @@ export default function DashboardGuidance() {
         <div className="max-w-2xl">
           <div className="flex items-center gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-              <Lightbulb className="size-5" />
+              <Lightbulb
+                className="size-5"
+                aria-hidden="true"
+              />
             </div>
 
             <div>
@@ -36,16 +40,19 @@ export default function DashboardGuidance() {
           </div>
 
           <p className="mt-4 text-sm leading-6 text-muted-foreground sm:text-base">
-            Break a difficult choice into options and criteria, then
-            give each criterion a weight based on how much it matters.
-            Scoring the options turns a vague choice into a structured
-            comparison.
+            Break a difficult choice into options and criteria,
+            then give each criterion a weight based on how much it
+            matters. Scoring the options turns a vague choice into
+            a structured comparison.
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3 lg:w-[32rem]">
+        <div className="grid gap-3 sm:grid-cols-3 lg:max-w-lg">
           <div className="rounded-xl border border-border bg-background p-4">
-            <Scale className="size-5 text-primary" />
+            <Scale
+              className="size-5 text-primary"
+              aria-hidden="true"
+            />
 
             <p className="mt-3 text-sm font-semibold text-foreground">
               Define
@@ -57,7 +64,10 @@ export default function DashboardGuidance() {
           </div>
 
           <div className="rounded-xl border border-border bg-background p-4">
-            <CheckCircle2 className="size-5 text-primary" />
+            <CheckCircle2
+              className="size-5 text-primary"
+              aria-hidden="true"
+            />
 
             <p className="mt-3 text-sm font-semibold text-foreground">
               Score
@@ -69,7 +79,10 @@ export default function DashboardGuidance() {
           </div>
 
           <div className="rounded-xl border border-border bg-background p-4">
-            <ArrowRight className="size-5 text-primary" />
+            <ArrowRight
+              className="size-5 text-primary"
+              aria-hidden="true"
+            />
 
             <p className="mt-3 text-sm font-semibold text-foreground">
               Compare
@@ -84,8 +97,8 @@ export default function DashboardGuidance() {
 
       <div className="mt-6 flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
-          Start with one decision and let the structure do the heavy
-          lifting.
+          Start with one decision and let the structure do the
+          heavy lifting.
         </p>
 
         <Link href="/decision/new">
@@ -94,7 +107,10 @@ export default function DashboardGuidance() {
             className="w-full sm:w-auto"
           >
             Create a decision
-            <ArrowRight className="size-4" />
+            <ArrowRight
+              className="size-4"
+              aria-hidden="true"
+            />
           </Button>
         </Link>
       </div>

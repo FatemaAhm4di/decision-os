@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import {
   BarChart3,
   CheckCircle2,
   ListChecks,
   Target,
+  TriangleAlert,
 } from "lucide-react";
 
 type DashboardDecision = {
@@ -39,26 +41,36 @@ export default function DashboardStats() {
     useState<DashboardStatsData>(initialStats);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
+    let cancelled = false;
 
-    const fetchStats = async () => {
+    async function loadStats() {
+      setIsLoading(true);
+      setHasError(false);
+
       try {
         const response = await fetch("/api/decision", {
           cache: "no-store",
         });
 
+        const data = await response.json().catch(() => null);
+
         if (!response.ok) {
           throw new Error(
-            "Failed to fetch dashboard statistics"
+            data?.message ??
+              "Failed to fetch dashboard statistics"
           );
         }
 
-        const decisions: DashboardDecision[] =
-          await response.json();
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid dashboard response");
+        }
 
-        if (!isMounted) {
+        const decisions = data as DashboardDecision[];
+
+        if (cancelled) {
           return;
         }
 
@@ -85,22 +97,26 @@ export default function DashboardStats() {
           completedDecisions,
         });
       } catch (error) {
-        console.error(error);
+        console.error(
+          "Failed to load dashboard statistics:",
+          error
+        );
 
-        if (isMounted) {
+        if (!cancelled) {
           setStats(initialStats);
+          setHasError(true);
         }
       } finally {
-        if (isMounted) {
+        if (!cancelled) {
           setIsLoading(false);
         }
       }
-    };
+    }
 
-    void fetchStats();
+    void loadStats();
 
     return () => {
-      isMounted = false;
+      cancelled = true;
     };
   }, []);
 
@@ -151,17 +167,36 @@ export default function DashboardStats() {
                 </p>
 
                 <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">
-                  {isLoading ? "—" : card.value}
+                  {isLoading ? "—" : hasError ? "!" : card.value}
                 </p>
               </div>
 
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-                <Icon className="size-5" />
+              <div
+                className={[
+                  "flex size-10 shrink-0 items-center justify-center rounded-xl",
+                  hasError
+                    ? "bg-destructive/10 text-destructive"
+                    : "bg-accent text-accent-foreground",
+                ].join(" ")}
+              >
+                {hasError ? (
+                  <TriangleAlert
+                    className="size-5"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <Icon
+                    className="size-5"
+                    aria-hidden="true"
+                  />
+                )}
               </div>
             </div>
 
             <p className="mt-3 text-xs leading-5 text-muted-foreground">
-              {card.description}
+              {hasError
+                ? "Statistics are temporarily unavailable."
+                : card.description}
             </p>
           </div>
         );
