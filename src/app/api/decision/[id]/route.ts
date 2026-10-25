@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 
 import { deleteDecision } from "@/lib/decision/delete-decision";
@@ -14,6 +13,23 @@ type RouteContext = {
   }>;
 };
 
+function isClientValidationError(message: string) {
+  return [
+    "Invalid decision data",
+    "Options must be an array",
+    "Criteria must be an array",
+    "Decision title is required",
+    "At least one option is required",
+    "Each option must have a name",
+    "At least one criterion is required",
+    "Each criterion must have a name",
+    "Duplicate option IDs are not allowed",
+    "Duplicate criterion IDs are not allowed",
+    "Criteria weights must",
+    "Each criterion weight",
+  ].some((prefix) => message.startsWith(prefix));
+}
+
 export async function GET(
   _request: Request,
   { params }: RouteContext
@@ -23,12 +39,8 @@ export async function GET(
 
     if (!id) {
       return NextResponse.json(
-        {
-          message: "Decision ID is required",
-        },
-        {
-          status: 400,
-        }
+        { message: "Decision ID is required" },
+        { status: 400 }
       );
     }
 
@@ -36,29 +48,18 @@ export async function GET(
 
     if (!decision) {
       return NextResponse.json(
-        {
-          message: "Decision not found",
-        },
-        {
-          status: 404,
-        }
+        { message: "Decision not found" },
+        { status: 404 }
       );
     }
 
     return NextResponse.json(decision);
   } catch (error) {
-    console.error(
-      "Failed to fetch decision:",
-      error
-    );
+    console.error("Failed to fetch decision:", error);
 
     return NextResponse.json(
-      {
-        message: "Failed to fetch decision",
-      },
-      {
-        status: 500,
-      }
+      { message: "Failed to fetch decision" },
+      { status: 500 }
     );
   }
 }
@@ -72,102 +73,55 @@ export async function PUT(
 
     if (!id) {
       return NextResponse.json(
-        {
-          message: "Decision ID is required",
-        },
-        {
-          status: 400,
-        }
+        { message: "Decision ID is required" },
+        { status: 400 }
       );
     }
 
-    const body =
-      (await request.json()) as UpdateDecisionInput;
+    let body: unknown;
+
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { message: "Request body must contain valid JSON." },
+        { status: 400 }
+      );
+    }
 
     const decision = await updateDecision(
       id,
-      body
+      body as UpdateDecisionInput
     );
 
     return NextResponse.json(decision);
   } catch (error) {
-    console.error(
-      "Failed to update decision:",
-      error
-    );
+    console.error("Failed to update decision:", error);
 
     if (!(error instanceof Error)) {
       return NextResponse.json(
-        {
-          message: "Failed to update decision",
-        },
-        {
-          status: 500,
-        }
+        { message: "Failed to update decision" },
+        { status: 500 }
       );
     }
 
     if (error.message === "Decision not found") {
       return NextResponse.json(
-        {
-          message: error.message,
-        },
-        {
-          status: 404,
-        }
+        { message: error.message },
+        { status: 404 }
       );
     }
 
-    if (
-      error.message ===
-      "Decision title is required"
-    ) {
+    if (isClientValidationError(error.message)) {
       return NextResponse.json(
-        {
-          message: error.message,
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    if (
-      error.message.includes(
-        "Criteria weights must"
-      )
-    ) {
-      return NextResponse.json(
-        {
-          message: error.message,
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    if (
-      error.message ===
-      "Criteria weights must be valid non-negative numbers"
-    ) {
-      return NextResponse.json(
-        {
-          message: error.message,
-        },
-        {
-          status: 400,
-        }
+        { message: error.message },
+        { status: 400 }
       );
     }
 
     return NextResponse.json(
-      {
-        message: "Failed to update decision",
-      },
-      {
-        status: 500,
-      }
+      { message: "Failed to update decision" },
+      { status: 500 }
     );
   }
 }
@@ -181,26 +135,17 @@ export async function DELETE(
 
     if (!id) {
       return NextResponse.json(
-        {
-          message: "Decision ID is required",
-        },
-        {
-          status: 400,
-        }
+        { message: "Decision ID is required" },
+        { status: 400 }
       );
     }
 
-    const deletedDecision =
-      await deleteDecision(id);
+    const deletedDecision = await deleteDecision(id);
 
     if (!deletedDecision) {
       return NextResponse.json(
-        {
-          message: "Decision not found",
-        },
-        {
-          status: 404,
-        }
+        { message: "Decision not found" },
+        { status: 404 }
       );
     }
 
@@ -208,18 +153,11 @@ export async function DELETE(
       message: "Decision deleted successfully",
     });
   } catch (error) {
-    console.error(
-      "Failed to delete decision:",
-      error
-    );
+    console.error("Failed to delete decision:", error);
 
     return NextResponse.json(
-      {
-        message: "Failed to delete decision",
-      },
-      {
-        status: 500,
-      }
+      { message: "Failed to delete decision" },
+      { status: 500 }
     );
   }
 }

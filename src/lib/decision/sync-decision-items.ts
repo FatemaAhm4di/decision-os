@@ -1,4 +1,3 @@
-
 import { Prisma } from "@prisma/client";
 
 type OptionInput = {
@@ -53,15 +52,9 @@ export async function syncDecisionItems(
   for (const option of data.options) {
     const name = option.name.trim();
 
-    if (!name) {
-      continue;
-    }
-
-    if (option.id) {
-      incomingOptionIds.add(option.id);
-    }
-
     if (existingOptionIds.has(option.id)) {
+      incomingOptionIds.add(option.id);
+
       await tx.option.update({
         where: {
           id: option.id,
@@ -70,14 +63,16 @@ export async function syncDecisionItems(
           name,
         },
       });
-    } else {
-      await tx.option.create({
-        data: {
-          name,
-          decisionId,
-        },
-      });
+
+      continue;
     }
+
+    await tx.option.create({
+      data: {
+        name,
+        decisionId,
+      },
+    });
   }
 
   for (const option of existingDecision.options) {
@@ -93,15 +88,9 @@ export async function syncDecisionItems(
   for (const criterion of data.criteria) {
     const name = criterion.name.trim();
 
-    if (!name) {
-      continue;
-    }
-
-    if (criterion.id) {
-      incomingCriterionIds.add(criterion.id);
-    }
-
     if (existingCriterionIds.has(criterion.id)) {
+      incomingCriterionIds.add(criterion.id);
+
       await tx.criterion.update({
         where: {
           id: criterion.id,
@@ -111,15 +100,17 @@ export async function syncDecisionItems(
           weight: criterion.weight,
         },
       });
-    } else {
-      await tx.criterion.create({
-        data: {
-          name,
-          weight: criterion.weight,
-          decisionId,
-        },
-      });
+
+      continue;
     }
+
+    await tx.criterion.create({
+      data: {
+        name,
+        weight: criterion.weight,
+        decisionId,
+      },
+    });
   }
 
   for (const criterion of existingDecision.criteria) {
