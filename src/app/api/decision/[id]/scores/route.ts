@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
@@ -14,105 +15,85 @@ type ScoreInput = {
   value: number;
 };
 
+function isScoreInput(score: unknown): score is ScoreInput {
+  if (typeof score !== "object" || score === null) {
+    return false;
+  }
+
+  const item = score as Record<string, unknown>;
+
+  return (
+    typeof item.optionId === "string" &&
+    item.optionId.trim().length > 0 &&
+    typeof item.criterionId === "string" &&
+    item.criterionId.trim().length > 0 &&
+    typeof item.value === "number" &&
+    Number.isFinite(item.value) &&
+    item.value >= 0 &&
+    item.value <= 10
+  );
+}
+
 export async function POST(
   request: Request,
   { params }: RouteContext
 ) {
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { message: "Request body must contain valid JSON." },
+      { status: 400 }
+    );
+  }
+
+  if (!Array.isArray(body)) {
+    return NextResponse.json(
+      { message: "Scores must be an array." },
+      { status: 400 }
+    );
+  }
+
+  const scores: unknown[] = body;
+
+  if (!scores.every(isScoreInput)) {
+    return NextResponse.json(
+      {
+        message:
+          "Each score must include valid optionId, criterionId, and a value between 0 and 10.",
+      },
+      { status: 400 }
+    );
+  }
+
   try {
     const { id: decisionId } = await params;
 
-    if (!decisionId) {
+    if (!decisionId?.trim()) {
       return NextResponse.json(
-        {
-          message: "Decision ID is required",
-        },
-        {
-          status: 400,
-        }
+        { message: "Decision ID is required." },
+        { status: 400 }
       );
     }
 
-    const body: unknown = await request.json();
-
-    if (!Array.isArray(body)) {
-      return NextResponse.json(
-        {
-          message: "Scores must be an array",
+    const decision = await prisma.decision.findUnique({
+      where: { id: decisionId },
+      select: {
+        options: {
+          select: { id: true },
         },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    const scores = body as unknown[];
-
-    const isValidScores = scores.every(
-      (score): score is ScoreInput => {
-        if (
-          typeof score !== "object" ||
-          score === null
-        ) {
-          return false;
-        }
-
-        const item = score as Record<
-          string,
-          unknown
-        >;
-
-        return (
-          typeof item.optionId === "string" &&
-          item.optionId.trim().length > 0 &&
-          typeof item.criterionId === "string" &&
-          item.criterionId.trim().length > 0 &&
-          typeof item.value === "number" &&
-          Number.isFinite(item.value) &&
-          item.value >= 0 &&
-          item.value <= 10
-        );
-      }
-    );
-
-    if (!isValidScores) {
-      return NextResponse.json(
-        {
-          message:
-            "Each score must include valid optionId, criterionId and a value between 0 and 10",
+        criteria: {
+          select: { id: true },
         },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    const decision =
-      await prisma.decision.findUnique({
-        where: {
-          id: decisionId,
-        },
-        include: {
-          options: {
-            select: {
-              id: true,
-            },
-          },
-          criteria: {
-            select: {
-              id: true,
-            },
-          },
-        },
-      });
+      },
+    });
 
     if (!decision) {
       return NextResponse.json(
-        {
-          message: "Decision not found",
-        },
-        {
-          status: 404,
-        }
+        { message: "Decision not found." },
+        { status: 404 }
       );
     }
 
@@ -123,111 +104,84 @@ export async function POST(
       return NextResponse.json(
         {
           message:
-            "A decision must have at least one option and one criterion before scores can be saved",
+            "A decision must have at least one option and one criterion before scores can be saved.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
     const expectedScoreCount =
-      decision.options.length *
-      decision.criteria.length;
+      decision.options.length * decision.criteria.length;
 
     if (scores.length !== expectedScoreCount) {
       return NextResponse.json(
         {
           message:
-            "A score is required for every option and criterion",
+            "A score is required for every option and criterion.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
     const optionIds = new Set(
-      decision.options.map(
-        (option) => option.id
-      )
+      decision.options.map((option) => option.id)
     );
 
     const criterionIds = new Set(
-      decision.criteria.map(
-        (criterion) => criterion.id
-      )
+      decision.criteria.map((criterion) => criterion.id)
     );
-
-    const hasInvalidRelation = scores.some(
-      (score) =>
-        !optionIds.has(score.optionId) ||
-        !criterionIds.has(score.criterionId)
-    );
-
-    if (hasInvalidRelation) {
-      return NextResponse.json(
-        {
-          message:
-            "One or more options or criteria do not belong to this decision",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
 
     const uniqueKeys = new Set<string>();
 
-    const hasDuplicates = scores.some(
-      (score) => {
-        const key = `${score.optionId}:${score.criterionId}`;
-
-        if (uniqueKeys.has(key)) {
-          return true;
-        }
-
-        uniqueKeys.add(key);
-        return false;
+    for (const score of scores) {
+      if (
+        !optionIds.has(score.optionId) ||
+        !criterionIds.has(score.criterionId)
+      ) {
+        return NextResponse.json(
+          {
+            message:
+              "One or more options or criteria do not belong to this decision.",
+          },
+          { status: 400 }
+        );
       }
-    );
 
-    if (hasDuplicates) {
-      return NextResponse.json(
-        {
-          message:
-            "Duplicate option and criterion combinations are not allowed",
-        },
-        {
-          status: 400,
-        }
-      );
+      const key = JSON.stringify([
+        score.optionId,
+        score.criterionId,
+      ]);
+
+      if (uniqueKeys.has(key)) {
+        return NextResponse.json(
+          {
+            message:
+              "Duplicate option and criterion combinations are not allowed.",
+          },
+          { status: 400 }
+        );
+      }
+
+      uniqueKeys.add(key);
     }
 
-    const expectedKeys = new Set(
-      decision.options.flatMap((option) =>
-        decision.criteria.map(
-          (criterion) =>
-            `${option.id}:${criterion.id}`
-        )
-      )
-    );
+    for (const option of decision.options) {
+      for (const criterion of decision.criteria) {
+        const key = JSON.stringify([
+          option.id,
+          criterion.id,
+        ]);
 
-    const hasMissingCombination =
-      [...expectedKeys].some(
-        (key) => !uniqueKeys.has(key)
-      );
-
-    if (hasMissingCombination) {
-      return NextResponse.json(
-        {
-          message:
-            "A score is required for every option and criterion",
-        },
-        {
-          status: 400,
+        if (!uniqueKeys.has(key)) {
+          return NextResponse.json(
+            {
+              message:
+                "A score is required for every option and criterion.",
+            },
+            { status: 400 }
+          );
         }
-      );
+      }
     }
 
     await prisma.$transaction(async (tx) => {
@@ -249,26 +203,15 @@ export async function POST(
     });
 
     return NextResponse.json(
-      {
-        message: "Scores saved successfully",
-      },
-      {
-        status: 200,
-      }
+      { message: "Scores saved successfully." },
+      { status: 200 }
     );
   } catch (error) {
-    console.error(
-      "Failed to save scores:",
-      error
-    );
+    console.error("Failed to save scores:", error);
 
     return NextResponse.json(
-      {
-        message: "Failed to save scores",
-      },
-      {
-        status: 500,
-      }
+      { message: "Failed to save scores." },
+      { status: 500 }
     );
   }
 }
