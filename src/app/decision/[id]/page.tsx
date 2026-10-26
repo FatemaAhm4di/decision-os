@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 
 import {
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+
 import {
   Card,
   CardContent,
@@ -18,9 +20,10 @@ import {
   CardTitle,
 } from "@/components/ui/Card";
 
+import { DecisionAnalysis } from "@/features/decision/components/decision-analysis";
 import { ScoreMatrix } from "@/features/decision/components/score-matrix";
-import { calculateDecision } from "@/lib/engine/calculate";
 import { getDecision } from "@/lib/decision/get-decision";
+import { calculateDecision } from "@/lib/engine/calculate";
 
 type Decision = NonNullable<
   Awaited<ReturnType<typeof getDecision>>
@@ -74,7 +77,10 @@ export default async function DecisionPage({
               </Button>
             </Link>
 
-            <Link href={`/decision/${id}`} className="w-full sm:w-auto">
+            <Link
+              href={`/decision/${id}`}
+              className="w-full sm:w-auto"
+            >
               <Button className="w-full sm:w-auto">
                 Try again
               </Button>
@@ -116,26 +122,47 @@ export default async function DecisionPage({
     );
   }
 
-  const expectedScoreCount =
-    decision.options.length * decision.criteria.length;
-
-  const actualScoreCount = decision.options.reduce(
-    (total, option) => total + option.scores.length,
-    0
-  );
-
-  const hasCompleteScores =
-    expectedScoreCount > 0 &&
-    actualScoreCount === expectedScoreCount;
-
   const hasOptions = decision.options.length > 0;
   const hasCriteria = decision.criteria.length > 0;
 
-  const results = hasCompleteScores
-    ? calculateDecision(decision)
-    : [];
+  const expectedScoreCount =
+    decision.options.length * decision.criteria.length;
+
+  const hasCompleteScores =
+    expectedScoreCount > 0 &&
+    decision.options.every((option) => {
+      const criterionIds = option.scores.map(
+        (score) => score.criterionId
+      );
+
+      return (
+        option.scores.length === decision.criteria.length &&
+        new Set(criterionIds).size ===
+          decision.criteria.length &&
+        decision.criteria.every((criterion) =>
+          option.scores.some(
+            (score) =>
+              score.criterionId === criterion.id &&
+              Number.isFinite(score.value) &&
+              score.value >= 0 &&
+              score.value <= 10
+          )
+        )
+      );
+    });
+
+  const results =
+    hasCompleteScores && hasOptions && hasCriteria
+      ? calculateDecision(decision)
+      : [];
 
   const winner = results[0] ?? null;
+
+  const isTie =
+    winner !== null &&
+    results.filter(
+      (result) => result.score === winner.score
+    ).length > 1;
 
   const createdAt = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -145,7 +172,6 @@ export default async function DecisionPage({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href="/decision"
@@ -166,11 +192,13 @@ export default async function DecisionPage({
         </Link>
       </div>
 
-      {/* Decision heading */}
       <section>
         <div className="flex items-start gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/10 sm:size-14">
-            <Trophy className="size-6 sm:size-7" />
+            <Trophy
+              className="size-6 sm:size-7"
+              aria-hidden="true"
+            />
           </div>
 
           <div className="min-w-0 flex-1">
@@ -179,14 +207,16 @@ export default async function DecisionPage({
             </h1>
 
             <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-              <CalendarDays className="size-4 shrink-0" />
+              <CalendarDays
+                className="size-4 shrink-0"
+                aria-hidden="true"
+              />
               <span>Created {createdAt}</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Setup warning */}
       {(!hasOptions || !hasCriteria) && (
         <Card className="border-destructive/20 bg-destructive/5">
           <CardContent className="flex items-start gap-3 p-5">
@@ -216,34 +246,50 @@ export default async function DecisionPage({
         </Card>
       )}
 
-      {/* Recommended option */}
       {winner && (
         <Card className="overflow-hidden border-primary/20 bg-primary/[0.03]">
           <CardContent className="p-6 sm:p-8">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
-                  <Trophy className="size-4 shrink-0" />
-                  Recommended option
+                  <Trophy
+                    className="size-4 shrink-0"
+                    aria-hidden="true"
+                  />
+                  {isTie
+                    ? "Top-ranked options"
+                    : "Recommended option"}
                 </div>
 
                 <h2 className="break-words text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                  {winner.name}
+                  {isTie
+                    ? results
+                        .filter(
+                          (result) =>
+                            result.score === winner.score
+                        )
+                        .map((result) => result.name)
+                        .join(" · ")
+                    : winner.name}
                 </h2>
 
                 <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-                  Based on the weighted criteria and scores you
-                  provided.
+                  {isTie
+                    ? "These options share the highest weighted score. Compare their individual criteria before making your final choice."
+                    : "Based on the weighted criteria and scores you provided."}
                 </p>
               </div>
 
               <div className="shrink-0 rounded-xl border border-border bg-background px-6 py-4 text-center shadow-sm">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Score
+                  {isTie ? "Top score" : "Score"}
                 </p>
 
                 <p className="mt-1 text-3xl font-bold tracking-tight text-foreground">
                   {winner.score}
+                  <span className="ml-1 text-sm font-medium text-muted-foreground">
+                    / 10
+                  </span>
                 </p>
               </div>
             </div>
@@ -251,12 +297,14 @@ export default async function DecisionPage({
         </Card>
       )}
 
-      {/* Options and criteria */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <ListTodo className="size-5 text-primary" />
+              <ListTodo
+                className="size-5 text-primary"
+                aria-hidden="true"
+              />
               Options
             </CardTitle>
           </CardHeader>
@@ -281,8 +329,7 @@ export default async function DecisionPage({
                   </p>
 
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Add options before you can compare this
-                    decision.
+                    Add options before you can compare this decision.
                   </p>
                 </div>
               )}
@@ -293,7 +340,10 @@ export default async function DecisionPage({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <SlidersHorizontal className="size-5 text-primary" />
+              <SlidersHorizontal
+                className="size-5 text-primary"
+                aria-hidden="true"
+              />
               Criteria
             </CardTitle>
           </CardHeader>
@@ -322,8 +372,8 @@ export default async function DecisionPage({
                   </p>
 
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Add criteria and assign weights before
-                    scoring this decision.
+                    Add criteria and assign weights before scoring
+                    this decision.
                   </p>
                 </div>
               )}
@@ -332,7 +382,6 @@ export default async function DecisionPage({
         </Card>
       </div>
 
-      {/* Score matrix */}
       <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle>Scores</CardTitle>
@@ -347,55 +396,25 @@ export default async function DecisionPage({
         </CardContent>
       </Card>
 
-      {/* Results */}
-      <Card className="overflow-hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="size-5 text-primary" />
-            Results
-          </CardTitle>
-        </CardHeader>
+      {results.length > 0 ? (
+        <DecisionAnalysis
+          options={decision.options}
+          criteria={decision.criteria}
+          results={results}
+        />
+      ) : (
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy
+                className="size-5 text-primary"
+                aria-hidden="true"
+              />
+              Analysis
+            </CardTitle>
+          </CardHeader>
 
-        <CardContent>
-          {results.length > 0 ? (
-            <div className="space-y-3">
-              {results.map((result, index) => (
-                <div
-                  key={result.optionId}
-                  className={[
-                    "flex items-center justify-between gap-4 rounded-xl",
-                    "border border-border p-4 transition-colors",
-                    "hover:bg-muted/40",
-                    index === 0
-                      ? "border-primary/20 bg-primary/[0.03]"
-                      : "",
-                  ].join(" ")}
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span
-                      className={[
-                        "flex size-8 shrink-0 items-center justify-center",
-                        "rounded-full text-sm font-bold",
-                        index === 0
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-primary/10 text-primary",
-                      ].join(" ")}
-                    >
-                      #{index + 1}
-                    </span>
-
-                    <span className="truncate font-medium text-foreground">
-                      {result.name}
-                    </span>
-                  </div>
-
-                  <span className="shrink-0 text-lg font-bold text-foreground">
-                    {result.score}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
+          <CardContent>
             <div className="rounded-xl border border-dashed border-border bg-muted/20 p-6 text-center">
               <p className="font-medium text-foreground">
                 {hasOptions && hasCriteria
@@ -405,13 +424,13 @@ export default async function DecisionPage({
 
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 {hasOptions && hasCriteria
-                  ? "Rate every option for every criterion to see the final ranking."
+                  ? "Rate every option against every criterion to unlock the ranking and detailed analysis."
                   : "Add at least one option and one criterion before scoring this decision."}
               </p>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
