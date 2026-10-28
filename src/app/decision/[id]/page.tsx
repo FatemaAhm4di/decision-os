@@ -21,7 +21,9 @@ import {
 } from "@/components/ui/Card";
 
 import { DecisionAnalysis } from "@/features/decision/components/decision-analysis";
+import { DuplicateDecisionButton } from "@/features/decision/components/duplicate-decision-button";
 import { ScoreMatrix } from "@/features/decision/components/score-matrix";
+
 import { getDecision } from "@/lib/decision/get-decision";
 import { calculateDecision } from "@/lib/engine/calculate";
 
@@ -181,15 +183,19 @@ export default async function DecisionPage({
           Back to decisions
         </Link>
 
-        <Link href={`/decision/${decision.id}/edit`}>
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-          >
-            <Pencil className="mr-2 size-4" />
-            Edit Decision
-          </Button>
-        </Link>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <DuplicateDecisionButton decisionId={decision.id} />
+
+          <Link href={`/decision/${decision.id}/edit`}>
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
+              <Pencil className="mr-2 size-4" />
+              Edit Decision
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <section>
