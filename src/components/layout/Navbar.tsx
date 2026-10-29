@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -9,7 +10,6 @@ import { navigationItems } from "./navigation";
 
 export default function Navbar() {
   const pathname = usePathname();
-
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function Navbar() {
   const toggleTheme = () => {
     document.documentElement.classList.toggle(
       "dark",
-      !document.documentElement.classList.contains("dark")
+      !document.documentElement.classList.contains("dark"),
     );
   };
 
@@ -58,11 +58,10 @@ export default function Navbar() {
         </Link>
 
         <div className="flex items-center gap-1">
-          {/* Theme */}
           <button
             type="button"
             onClick={toggleTheme}
-            className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Toggle theme"
             title="Toggle theme"
           >
@@ -70,11 +69,10 @@ export default function Navbar() {
             <Sun className="hidden size-4 dark:block" />
           </button>
 
-          {/* Menu */}
           <button
             type="button"
             onClick={() => setIsMenuOpen((open) => !open)}
-            className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-navigation"
@@ -91,7 +89,6 @@ export default function Navbar() {
       {/* Mobile Drawer */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          {/* Overlay */}
           <button
             type="button"
             aria-label="Close menu"
@@ -99,7 +96,6 @@ export default function Navbar() {
             className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
           />
 
-          {/* Drawer */}
           <aside
             id="mobile-navigation"
             className="absolute right-0 top-0 flex h-full w-[min(20rem,85vw)] flex-col border-l border-border bg-background shadow-xl"
@@ -107,7 +103,12 @@ export default function Navbar() {
           >
             {/* Drawer Header */}
             <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4">
-              <div className="flex items-center gap-2.5">
+              <Link
+                href="/"
+                onClick={closeMenu}
+                className="flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="Decision OS home"
+              >
                 <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Check className="size-4" strokeWidth={2.5} />
                 </span>
@@ -115,12 +116,12 @@ export default function Navbar() {
                 <span className="text-sm font-semibold text-foreground">
                   Decision OS
                 </span>
-              </div>
+              </Link>
 
               <button
                 type="button"
                 onClick={closeMenu}
-                className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label="Close menu"
               >
                 <X className="size-5" />
@@ -144,13 +145,13 @@ export default function Navbar() {
                     aria-current={active ? "page" : undefined}
                     className={[
                       "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium",
-                      "transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      "outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
                       active
                         ? "bg-accent text-accent-foreground"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     ].join(" ")}
                   >
-                    <Icon className="size-5" />
+                    <Icon className="size-5" aria-hidden="true" />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -162,7 +163,9 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="flex w-full items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex w-full items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="Toggle theme"
+                title="Toggle theme"
               >
                 <span className="flex items-center gap-3">
                   <Moon className="size-5 dark:hidden" />

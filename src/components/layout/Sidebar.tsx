@@ -20,7 +20,7 @@ export default function Sidebar() {
   const toggleTheme = () => {
     document.documentElement.classList.toggle(
       "dark",
-      !document.documentElement.classList.contains("dark")
+      !document.documentElement.classList.contains("dark"),
     );
   };
 
@@ -59,13 +59,13 @@ export default function Sidebar() {
               aria-current={active ? "page" : undefined}
               className={[
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
-                "transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
                 active
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
               ].join(" ")}
             >
-              <Icon className="size-4" />
+              <Icon className="size-4" aria-hidden="true" />
               <span>{item.label}</span>
             </Link>
           );
@@ -77,7 +77,7 @@ export default function Sidebar() {
         <button
           type="button"
           onClick={toggleTheme}
-          className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors outline-none hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Toggle theme"
           title="Toggle theme"
         >

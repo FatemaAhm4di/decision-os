@@ -1,6 +1,7 @@
 import {
   BarChart3,
   LayoutDashboard,
+  PanelsTopLeft,
   type LucideIcon,
 } from "lucide-react";
 
@@ -20,5 +21,10 @@ export const navigationItems: NavigationItem[] = [
     label: "Decisions",
     href: "/decision",
     icon: BarChart3,
+  },
+  {
+    label: "Templates",
+    href: "/templates",
+    icon: PanelsTopLeft,
   },
 ];
