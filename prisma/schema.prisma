@@ -6,48 +6,55 @@ datasource db {
   provider = "sqlite"
 }
 
+enum DecisionStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+}
+
 model Decision {
-  id         String      @id @default(cuid())
-  title      String
+  id          String         @id @default(cuid())
+  title       String
+  isCompleted Boolean        @default(false)
+  status      DecisionStatus @default(DRAFT)
 
-  options    Option[]
-  criteria   Criterion[]
+  options     Option[]
+  criteria    Criterion[]
 
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 }
 
 model Option {
-  id          String      @id @default(cuid())
-  name        String
+  id         String   @id @default(cuid())
+  name       String
 
-  decisionId  String
-  decision    Decision    @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  decisionId String
+  decision   Decision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
 
-  scores      Score[]
+  scores     Score[]
 }
 
 model Criterion {
-  id          String      @id @default(cuid())
-  name        String
-  weight      Float
+  id         String   @id @default(cuid())
+  name       String
+  weight     Float
 
-  decisionId  String
-  decision    Decision    @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  decisionId String
+  decision   Decision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
 
-  scores      Score[]
+  scores     Score[]
 }
 
 model Score {
-  id           String       @id @default(cuid())
+  id          String    @id @default(cuid())
+  value       Float
 
-  value        Float
+  optionId    String
+  option      Option    @relation(fields: [optionId], references: [id], onDelete: Cascade)
 
-  optionId     String
-  option        Option      @relation(fields: [optionId], references: [id], onDelete: Cascade)
-
-  criterionId  String
-  criterion    Criterion    @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  criterionId String
+  criterion   Criterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
 
   @@unique([optionId, criterionId])
 }

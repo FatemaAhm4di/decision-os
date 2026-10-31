@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -16,7 +17,7 @@ export function useDecisions(): UseDecisionsResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDecisions = useCallback(async () => {
+  const refetch = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -52,60 +53,13 @@ export function useDecisions(): UseDecisionsResult {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function loadDecisions() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch("/api/decision", {
-          cache: "no-store",
-        });
-
-        const data = await response.json().catch(() => null);
-
-        if (!response.ok) {
-          throw new Error(
-            data?.message ?? "Failed to fetch decisions"
-          );
-        }
-
-        if (!Array.isArray(data)) {
-          throw new Error("Invalid decisions response");
-        }
-
-        if (!cancelled) {
-          setDecisions(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch decisions:", error);
-
-        if (!cancelled) {
-          setError(
-            error instanceof Error
-              ? error.message
-              : "Unable to load decisions. Please try again."
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void loadDecisions();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void refetch();
+  }, [refetch]);
 
   return {
     decisions,
     isLoading,
     error,
-    refetch: fetchDecisions,
+    refetch,
   };
 }

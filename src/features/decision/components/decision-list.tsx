@@ -284,6 +284,7 @@ export function DecisionList({
               key={decision.id}
               decision={decision}
               onDeleted={refetch}
+              onStatusChanged={refetch}
             />
           ))}
         </div>

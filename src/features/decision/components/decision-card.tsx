@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/Card";
 
 import { DeleteDecisionButton } from "./delete-decision-button";
+import { DecisionStatusButton } from "./decision-status-button";
 
 type DecisionCardDecision = {
   id: string;
@@ -38,12 +39,14 @@ type DecisionCardDecision = {
 
 type DecisionCardProps = {
   decision: DecisionCardDecision;
-  onDeleted: () => void;
+  onDeleted: () => void | Promise<void>;
+  onStatusChanged: () => void | Promise<void>;
 };
 
 export function DecisionCard({
   decision,
   onDeleted,
+  onStatusChanged,
 }: DecisionCardProps) {
   const optionCount = decision.options?.length ?? 0;
   const criterionCount = decision.criteria?.length ?? 0;
@@ -211,18 +214,24 @@ export function DecisionCard({
             <div className="min-w-0">
               <p className="text-sm font-semibold text-foreground">
                 {isCompleted
-                  ? "Decision is ready"
+                  ? "Decision is completed"
                   : "Scoring in progress"}
               </p>
 
               <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
                 {isCompleted
-                  ? "All options have been scored against every criterion."
-                  : "Complete the score matrix to get your final ranking."}
+                  ? "This decision has been marked as final."
+                  : "Complete your evaluation and finalize your decision."}
               </p>
             </div>
           </div>
         </div>
+
+        <DecisionStatusButton
+          decisionId={decision.id}
+          isCompleted={isCompleted}
+          onUpdated={onStatusChanged}
+        />
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link
