@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
@@ -68,6 +67,7 @@ export async function POST(req: Request) {
   }
 
   const title = body.title.trim();
+
   const options = body.options
     .map((option) => ({ name: option.name.trim() }))
     .filter((option) => option.name.length > 0);
@@ -111,6 +111,8 @@ export async function POST(req: Request) {
     const decision = await prisma.decision.create({
       data: {
         title,
+        status: "DRAFT",
+        isCompleted: false,
         options: {
           create: options,
         },
@@ -158,30 +160,9 @@ export async function GET() {
     });
 
     const decisionsWithStatus = decisions.map((decision) => {
-      const expectedScoreCount =
-        decision.options.length * decision.criteria.length;
-
-      const actualScoreCount = decision.options.reduce(
-        (total, option) => total + option.scores.length,
-        0
-      );
-
-      const hasCompleteScores =
-        expectedScoreCount > 0 &&
-        actualScoreCount === expectedScoreCount;
-
       return {
-        id: decision.id,
-        title: decision.title,
-        createdAt: decision.createdAt,
-        updatedAt: decision.updatedAt,
-        options: decision.options.map((option) => ({
-          id: option.id,
-          name: option.name,
-          decisionId: option.decisionId,
-        })),
-        criteria: decision.criteria,
-        isCompleted: hasCompleteScores,
+        ...decision,
+        isCompleted: decision.status === "COMPLETED",
       };
     });
 
