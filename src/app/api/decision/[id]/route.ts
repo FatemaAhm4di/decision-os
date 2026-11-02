@@ -15,6 +15,11 @@ type RouteContext = {
   }>;
 };
 
+type DecisionStatus =
+  | "DRAFT"
+  | "IN_PROGRESS"
+  | "COMPLETED";
+
 function isClientValidationError(message: string) {
   return [
     "Invalid decision data",
@@ -30,6 +35,14 @@ function isClientValidationError(message: string) {
     "Criteria weights must",
     "Each criterion weight",
   ].some((prefix) => message.startsWith(prefix));
+}
+
+function isDecisionStatus(value: unknown): value is DecisionStatus {
+  return (
+    value === "DRAFT" ||
+    value === "IN_PROGRESS" ||
+    value === "COMPLETED"
+  );
 }
 
 export async function GET(
@@ -155,12 +168,27 @@ export async function PATCH(
 
     if (
       typeof body !== "object" ||
-      body === null ||
-      !("isCompleted" in body) ||
-      typeof body.isCompleted !== "boolean"
+      body === null
     ) {
       return NextResponse.json(
-        { message: "A valid isCompleted boolean is required." },
+        { message: "A valid status is required." },
+        { status: 400 }
+      );
+    }
+
+    if (!("status" in body)) {
+      return NextResponse.json(
+        { message: "A valid status is required." },
+        { status: 400 }
+      );
+    }
+
+    if (!isDecisionStatus(body.status)) {
+      return NextResponse.json(
+        {
+          message:
+            "Status must be DRAFT, IN_PROGRESS, or COMPLETED.",
+        },
         { status: 400 }
       );
     }
@@ -168,7 +196,8 @@ export async function PATCH(
     const decision = await prisma.decision.update({
       where: { id },
       data: {
-        isCompleted: body.isCompleted,
+        status: body.status,
+        isCompleted: body.status === "COMPLETED",
       },
     });
 
