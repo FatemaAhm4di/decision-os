@@ -4,10 +4,10 @@ import {
   ArrowRight,
   CalendarDays,
   CheckCircle2,
+  CircleDashed,
   FolderKanban,
   ListTodo,
   SlidersHorizontal,
-  Sparkles,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -18,6 +18,8 @@ import {
   CardTitle,
 } from "@/components/ui/Card";
 
+import type { DecisionStatus } from "@/types/decision";
+
 import { DeleteDecisionButton } from "./delete-decision-button";
 import { DecisionStatusButton } from "./decision-status-button";
 
@@ -25,6 +27,8 @@ type DecisionCardDecision = {
   id: string;
   title: string;
   createdAt: string | Date;
+  status?: DecisionStatus;
+  isCompleted?: boolean;
   options?: {
     id: string;
     name?: string;
@@ -34,13 +38,45 @@ type DecisionCardDecision = {
     name?: string;
     weight?: number;
   }[];
-  isCompleted?: boolean;
 };
 
 type DecisionCardProps = {
   decision: DecisionCardDecision;
   onDeleted: () => void | Promise<void>;
   onStatusChanged: () => void | Promise<void>;
+};
+
+const statusConfig: Record<
+  DecisionStatus,
+  {
+    label: string;
+    description: string;
+    icon: typeof FolderKanban;
+    badgeClass: string;
+    iconClass: string;
+  }
+> = {
+  DRAFT: {
+    label: "Draft",
+    description: "This decision is saved as a draft.",
+    icon: FolderKanban,
+    badgeClass: "border-border bg-muted text-muted-foreground",
+    iconClass: "bg-muted text-muted-foreground",
+  },
+  IN_PROGRESS: {
+    label: "In Progress",
+    description: "Complete your evaluation and finalize your decision.",
+    icon: CircleDashed,
+    badgeClass: "border-primary/20 bg-primary/10 text-primary",
+    iconClass: "bg-primary/10 text-primary",
+  },
+  COMPLETED: {
+    label: "Completed",
+    description: "This decision has been marked as final.",
+    icon: CheckCircle2,
+    badgeClass: "border-primary/20 bg-primary/10 text-primary",
+    iconClass: "bg-primary/15 text-primary",
+  },
 };
 
 export function DecisionCard({
@@ -50,7 +86,13 @@ export function DecisionCard({
 }: DecisionCardProps) {
   const optionCount = decision.options?.length ?? 0;
   const criterionCount = decision.criteria?.length ?? 0;
-  const isCompleted = decision.isCompleted === true;
+
+  const status: DecisionStatus =
+    decision.status ??
+    (decision.isCompleted ? "COMPLETED" : "IN_PROGRESS");
+
+  const currentStatus = statusConfig[status];
+  const StatusIcon = currentStatus.icon;
 
   const createdAt = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -69,8 +111,8 @@ export function DecisionCard({
       <div
         className={[
           "absolute left-0 top-0 h-full w-1 transition-all duration-300",
-          isCompleted
-            ? "bg-primary group-hover:bg-primary"
+          status === "COMPLETED"
+            ? "bg-primary"
             : "bg-primary/20 group-hover:bg-primary",
         ].join(" ")}
       />
@@ -83,24 +125,15 @@ export function DecisionCard({
                 "flex size-14 shrink-0 items-center justify-center rounded-2xl",
                 "ring-1 transition-all duration-300",
                 "group-hover:scale-105 group-hover:shadow-lg",
-                isCompleted
-                  ? "bg-primary/15 text-primary ring-primary/20"
-                  : "bg-primary/10 text-primary ring-primary/15 group-hover:bg-primary/15",
+                currentStatus.iconClass,
+                "ring-primary/15",
               ].join(" ")}
             >
-              {isCompleted ? (
-                <CheckCircle2
-                  className="size-6 transition-transform duration-300 group-hover:rotate-6"
-                  strokeWidth={2}
-                  aria-hidden="true"
-                />
-              ) : (
-                <FolderKanban
-                  className="size-6 transition-transform duration-300 group-hover:rotate-6"
-                  strokeWidth={2}
-                  aria-hidden="true"
-                />
-              )}
+              <StatusIcon
+                className="size-6 transition-transform duration-300 group-hover:rotate-6"
+                strokeWidth={2}
+                aria-hidden="true"
+              />
             </div>
 
             <div className="min-w-0">
@@ -108,24 +141,15 @@ export function DecisionCard({
                 className={[
                   "mb-3 inline-flex items-center gap-1.5 rounded-full",
                   "border px-3 py-1 text-xs font-medium",
-                  isCompleted
-                    ? "border-primary/20 bg-primary/10 text-primary"
-                    : "border-border bg-primary/5 text-primary",
+                  currentStatus.badgeClass,
                 ].join(" ")}
               >
-                {isCompleted ? (
-                  <CheckCircle2
-                    className="size-3.5"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <Sparkles
-                    className="size-3.5"
-                    aria-hidden="true"
-                  />
-                )}
+                <StatusIcon
+                  className="size-3.5"
+                  aria-hidden="true"
+                />
 
-                {isCompleted ? "Completed" : "In progress"}
+                {currentStatus.label}
               </div>
 
               <CardTitle
@@ -198,30 +222,24 @@ export function DecisionCard({
             <div
               className={[
                 "flex size-9 shrink-0 items-center justify-center rounded-lg",
-                isCompleted
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground",
+                currentStatus.iconClass,
               ].join(" ")}
               aria-hidden="true"
             >
-              {isCompleted ? (
-                <CheckCircle2 className="size-5" />
-              ) : (
-                <Sparkles className="size-5" />
-              )}
+              <StatusIcon className="size-5" />
             </div>
 
             <div className="min-w-0">
               <p className="text-sm font-semibold text-foreground">
-                {isCompleted
+                {status === "COMPLETED"
                   ? "Decision is completed"
-                  : "Scoring in progress"}
+                  : status === "DRAFT"
+                    ? "Decision is a draft"
+                    : "Scoring in progress"}
               </p>
 
               <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-                {isCompleted
-                  ? "This decision has been marked as final."
-                  : "Complete your evaluation and finalize your decision."}
+                {currentStatus.description}
               </p>
             </div>
           </div>
@@ -229,7 +247,7 @@ export function DecisionCard({
 
         <DecisionStatusButton
           decisionId={decision.id}
-          isCompleted={isCompleted}
+          status={status}
           onUpdated={onStatusChanged}
         />
 
