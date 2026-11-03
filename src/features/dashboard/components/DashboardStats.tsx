@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -147,10 +148,15 @@ export default function DashboardStats() {
     },
   ];
 
+  const gridColumns =
+    cards.length === 2
+      ? "grid-cols-1 sm:grid-cols-2"
+      : "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4";
+
   return (
     <section
       aria-label="Dashboard statistics"
-      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      className={`grid gap-4 ${gridColumns}`}
     >
       {cards.map((card) => {
         const Icon = card.icon;
