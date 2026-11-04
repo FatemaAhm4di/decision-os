@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 
 import {
@@ -12,7 +11,6 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
-
 import {
   Card,
   CardContent,
@@ -22,14 +20,13 @@ import {
 
 import { DecisionAnalysis } from "@/features/decision/components/decision-analysis";
 import { DuplicateDecisionButton } from "@/features/decision/components/duplicate-decision-button";
+import { ExportDecisionButton } from "@/features/decision/components/export-decision-button";
 import { ScoreMatrix } from "@/features/decision/components/score-matrix";
 
 import { getDecision } from "@/lib/decision/get-decision";
 import { calculateDecision } from "@/lib/engine/calculate";
 
-type Decision = NonNullable<
-  Awaited<ReturnType<typeof getDecision>>
->;
+type Decision = NonNullable<Awaited<ReturnType<typeof getDecision>>>;
 
 type PageProps = {
   params: Promise<{
@@ -37,9 +34,7 @@ type PageProps = {
   }>;
 };
 
-export default async function DecisionPage({
-  params,
-}: PageProps) {
+export default async function DecisionPage({ params }: PageProps) {
   const { id } = await params;
 
   let decision: Decision | null = null;
@@ -64,28 +59,19 @@ export default async function DecisionPage({
           </h1>
 
           <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-            Something went wrong while loading this decision.
-            Please try again.
+            Something went wrong while loading this decision. Please try again.
           </p>
 
           <div className="mt-6 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
             <Link href="/decision" className="w-full sm:w-auto">
-              <Button
-                variant="outline"
-                className="w-full sm:w-auto"
-              >
+              <Button variant="outline" className="w-full sm:w-auto">
                 <ArrowLeft className="mr-2 size-4" />
                 Back to decisions
               </Button>
             </Link>
 
-            <Link
-              href={`/decision/${id}`}
-              className="w-full sm:w-auto"
-            >
-              <Button className="w-full sm:w-auto">
-                Try again
-              </Button>
+            <Link href={`/decision/${id}`} className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto">Try again</Button>
             </Link>
           </div>
         </CardContent>
@@ -109,8 +95,8 @@ export default async function DecisionPage({
           </h1>
 
           <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-            The decision you are looking for does not exist or
-            may have been removed.
+            The decision you are looking for does not exist or may have been
+            removed.
           </p>
 
           <Link href="/decision" className="mt-6">
@@ -133,22 +119,19 @@ export default async function DecisionPage({
   const hasCompleteScores =
     expectedScoreCount > 0 &&
     decision.options.every((option) => {
-      const criterionIds = option.scores.map(
-        (score) => score.criterionId
-      );
+      const criterionIds = option.scores.map((score) => score.criterionId);
 
       return (
         option.scores.length === decision.criteria.length &&
-        new Set(criterionIds).size ===
-          decision.criteria.length &&
+        new Set(criterionIds).size === decision.criteria.length &&
         decision.criteria.every((criterion) =>
           option.scores.some(
             (score) =>
               score.criterionId === criterion.id &&
               Number.isFinite(score.value) &&
               score.value >= 0 &&
-              score.value <= 10
-          )
+              score.value <= 10,
+          ),
         )
       );
     });
@@ -162,9 +145,7 @@ export default async function DecisionPage({
 
   const isTie =
     winner !== null &&
-    results.filter(
-      (result) => result.score === winner.score
-    ).length > 1;
+    results.filter((result) => result.score === winner.score).length > 1;
 
   const createdAt = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -184,13 +165,20 @@ export default async function DecisionPage({
         </Link>
 
         <div className="flex flex-col gap-2 sm:flex-row">
+          <ExportDecisionButton
+            title={decision.title}
+            status={decision.status}
+            createdAt={new Date(decision.createdAt).toISOString()}
+            updatedAt={new Date(decision.updatedAt).toISOString()}
+            options={decision.options}
+            criteria={decision.criteria}
+            results={results}
+          />
+
           <DuplicateDecisionButton decisionId={decision.id} />
 
           <Link href={`/decision/${decision.id}/edit`}>
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto"
-            >
+            <Button variant="outline" className="w-full sm:w-auto">
               <Pencil className="mr-2 size-4" />
               Edit Decision
             </Button>
@@ -237,8 +225,8 @@ export default async function DecisionPage({
               </h2>
 
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Add at least one option and one criterion before
-                entering scores.
+                Add at least one option and one criterion before entering
+                scores.
               </p>
 
               <Link
@@ -258,22 +246,14 @@ export default async function DecisionPage({
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
-                  <Trophy
-                    className="size-4 shrink-0"
-                    aria-hidden="true"
-                  />
-                  {isTie
-                    ? "Top-ranked options"
-                    : "Recommended option"}
+                  <Trophy className="size-4 shrink-0" aria-hidden="true" />
+                  {isTie ? "Top-ranked options" : "Recommended option"}
                 </div>
 
                 <h2 className="break-words text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                   {isTie
                     ? results
-                        .filter(
-                          (result) =>
-                            result.score === winner.score
-                        )
+                        .filter((result) => result.score === winner.score)
                         .map((result) => result.name)
                         .join(" · ")
                     : winner.name}
@@ -333,7 +313,6 @@ export default async function DecisionPage({
                   <p className="font-medium text-foreground">
                     No options added yet.
                   </p>
-
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
                     Add options before you can compare this decision.
                   </p>
@@ -376,10 +355,9 @@ export default async function DecisionPage({
                   <p className="font-medium text-foreground">
                     No criteria added yet.
                   </p>
-
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Add criteria and assign weights before scoring
-                    this decision.
+                    Add criteria and assign weights before scoring this
+                    decision.
                   </p>
                 </div>
               )}
@@ -412,10 +390,7 @@ export default async function DecisionPage({
         <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Trophy
-                className="size-5 text-primary"
-                aria-hidden="true"
-              />
+              <Trophy className="size-5 text-primary" aria-hidden="true" />
               Analysis
             </CardTitle>
           </CardHeader>
