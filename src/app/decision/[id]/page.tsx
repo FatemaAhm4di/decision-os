@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/Card";
 
 import { DecisionAnalysis } from "@/features/decision/components/decision-analysis";
+import { DecisionNotes } from "@/features/decision/components/decision-notes";
 import { DuplicateDecisionButton } from "@/features/decision/components/duplicate-decision-button";
 import { ExportDecisionButton } from "@/features/decision/components/export-decision-button";
 import { ScoreMatrix } from "@/features/decision/components/score-matrix";
@@ -26,7 +28,9 @@ import { ScoreMatrix } from "@/features/decision/components/score-matrix";
 import { getDecision } from "@/lib/decision/get-decision";
 import { calculateDecision } from "@/lib/engine/calculate";
 
-type Decision = NonNullable<Awaited<ReturnType<typeof getDecision>>>;
+type Decision = NonNullable<
+  Awaited<ReturnType<typeof getDecision>>
+>;
 
 type PageProps = {
   params: Promise<{
@@ -34,7 +38,9 @@ type PageProps = {
   }>;
 };
 
-export default async function DecisionPage({ params }: PageProps) {
+export default async function DecisionPage({
+  params,
+}: PageProps) {
   const { id } = await params;
 
   let decision: Decision | null = null;
@@ -71,7 +77,9 @@ export default async function DecisionPage({ params }: PageProps) {
             </Link>
 
             <Link href={`/decision/${id}`} className="w-full sm:w-auto">
-              <Button className="w-full sm:w-auto">Try again</Button>
+              <Button className="w-full sm:w-auto">
+                Try again
+              </Button>
             </Link>
           </div>
         </CardContent>
@@ -95,8 +103,7 @@ export default async function DecisionPage({ params }: PageProps) {
           </h1>
 
           <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-            The decision you are looking for does not exist or may have been
-            removed.
+            The decision you are looking for does not exist or may have been removed.
           </p>
 
           <Link href="/decision" className="mt-6">
@@ -119,7 +126,9 @@ export default async function DecisionPage({ params }: PageProps) {
   const hasCompleteScores =
     expectedScoreCount > 0 &&
     decision.options.every((option) => {
-      const criterionIds = option.scores.map((score) => score.criterionId);
+      const criterionIds = option.scores.map(
+        (score) => score.criterionId
+      );
 
       return (
         option.scores.length === decision.criteria.length &&
@@ -130,8 +139,8 @@ export default async function DecisionPage({ params }: PageProps) {
               score.criterionId === criterion.id &&
               Number.isFinite(score.value) &&
               score.value >= 0 &&
-              score.value <= 10,
-          ),
+              score.value <= 10
+          )
         )
       );
     });
@@ -145,7 +154,9 @@ export default async function DecisionPage({ params }: PageProps) {
 
   const isTie =
     winner !== null &&
-    results.filter((result) => result.score === winner.score).length > 1;
+    results.filter(
+      (result) => result.score === winner.score
+    ).length > 1;
 
   const createdAt = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -225,8 +236,7 @@ export default async function DecisionPage({ params }: PageProps) {
               </h2>
 
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Add at least one option and one criterion before entering
-                scores.
+                Add at least one option and one criterion before entering scores.
               </p>
 
               <Link
@@ -246,14 +256,19 @@ export default async function DecisionPage({ params }: PageProps) {
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
-                  <Trophy className="size-4 shrink-0" aria-hidden="true" />
+                  <Trophy
+                    className="size-4 shrink-0"
+                    aria-hidden="true"
+                  />
                   {isTie ? "Top-ranked options" : "Recommended option"}
                 </div>
 
                 <h2 className="break-words text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                   {isTie
                     ? results
-                        .filter((result) => result.score === winner.score)
+                        .filter(
+                          (result) => result.score === winner.score
+                        )
                         .map((result) => result.name)
                         .join(" · ")
                     : winner.name}
@@ -313,6 +328,7 @@ export default async function DecisionPage({ params }: PageProps) {
                   <p className="font-medium text-foreground">
                     No options added yet.
                   </p>
+
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
                     Add options before you can compare this decision.
                   </p>
@@ -355,9 +371,9 @@ export default async function DecisionPage({ params }: PageProps) {
                   <p className="font-medium text-foreground">
                     No criteria added yet.
                   </p>
+
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Add criteria and assign weights before scoring this
-                    decision.
+                    Add criteria and assign weights before scoring this decision.
                   </p>
                 </div>
               )}
@@ -380,6 +396,8 @@ export default async function DecisionPage({ params }: PageProps) {
         </CardContent>
       </Card>
 
+      <DecisionNotes decisionId={decision.id} />
+
       {results.length > 0 ? (
         <DecisionAnalysis
           options={decision.options}
@@ -390,7 +408,10 @@ export default async function DecisionPage({ params }: PageProps) {
         <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Trophy className="size-5 text-primary" aria-hidden="true" />
+              <Trophy
+                className="size-5 text-primary"
+                aria-hidden="true"
+              />
               Analysis
             </CardTitle>
           </CardHeader>

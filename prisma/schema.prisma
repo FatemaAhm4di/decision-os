@@ -15,6 +15,7 @@ enum DecisionStatus {
 model Decision {
   id          String         @id @default(cuid())
   title       String
+  notes       String         @default("")
   isCompleted Boolean        @default(false)
   status      DecisionStatus @default(DRAFT)
 
