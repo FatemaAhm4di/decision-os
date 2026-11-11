@@ -396,7 +396,11 @@ export default async function DecisionPage({
         </CardContent>
       </Card>
 
-      <DecisionNotes decisionId={decision.id} />
+      <DecisionNotes
+  key={decision.id}
+  decisionId={decision.id}
+  initialNotes={decision.notes ?? ""}
+/>
 
       {results.length > 0 ? (
         <DecisionAnalysis

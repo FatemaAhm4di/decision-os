@@ -90,7 +90,9 @@ export async function PUT(
 
     if (body.notes.length > 10000) {
       return NextResponse.json(
-        { message: "Notes cannot exceed 10,000 characters." },
+        {
+          message: "Notes cannot exceed 10,000 characters.",
+        },
         { status: 400 }
       );
     }
