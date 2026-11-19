@@ -3,12 +3,11 @@
 
 import { useState, type ChangeEvent } from "react";
 import {
-  AlertCircle,
-  CheckCircle2,
   FileText,
   Loader2,
   Save,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
 import {
@@ -23,7 +22,7 @@ type DecisionNotesProps = {
   initialNotes: string;
 };
 
-type SaveStatus = "idle" | "saving" | "saved" | "error";
+type SaveStatus = "idle" | "saving";
 
 const MAX_NOTES_LENGTH = 10000;
 
@@ -34,21 +33,19 @@ export function DecisionNotes({
   const [notes, setNotes] = useState(initialNotes);
   const [savedNotes, setSavedNotes] = useState(initialNotes);
   const [status, setStatus] = useState<SaveStatus>("idle");
-  const [errorMessage, setErrorMessage] = useState("");
 
   const isDirty = notes !== savedNotes;
 
-  const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+  const handleChange = (
+    event: ChangeEvent<HTMLTextAreaElement>
+  ) => {
     setNotes(event.target.value);
-    setStatus("idle");
-    setErrorMessage("");
   };
 
   const handleSave = async () => {
     if (!isDirty || status === "saving") return;
 
     setStatus("saving");
-    setErrorMessage("");
 
     try {
       const response = await fetch(
@@ -62,30 +59,31 @@ export function DecisionNotes({
         }
       );
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Failed to save decision notes."
+          data?.message ?? "Failed to save decision notes."
         );
       }
 
       const updatedNotes =
-        typeof data.notes === "string" ? data.notes : notes;
+        typeof data?.notes === "string" ? data.notes : notes;
 
       setNotes(updatedNotes);
       setSavedNotes(updatedNotes);
-      setStatus("saved");
+
+      toast.success("Notes saved successfully.");
     } catch (error) {
       console.error("Failed to save decision notes:", error);
 
-      setErrorMessage(
+      toast.error(
         error instanceof Error
           ? error.message
           : "Something went wrong while saving notes."
       );
-
-      setStatus("error");
+    } finally {
+      setStatus("idle");
     }
   };
 
@@ -132,17 +130,10 @@ export function DecisionNotes({
             className="min-h-5 text-sm"
             aria-live="polite"
           >
-            {status === "saved" && (
-              <span className="inline-flex items-center gap-1.5 text-primary">
-                <CheckCircle2 className="size-4" />
-                Notes saved successfully.
-              </span>
-            )}
-
-            {status === "error" && (
-              <span className="inline-flex items-start gap-1.5 text-destructive">
-                <AlertCircle className="mt-0.5 size-4 shrink-0" />
-                {errorMessage}
+            {status === "saving" && (
+              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                Saving changes...
               </span>
             )}
 
@@ -155,13 +146,6 @@ export function DecisionNotes({
             {status === "idle" && !isDirty && (
               <span className="text-muted-foreground">
                 Your notes are up to date.
-              </span>
-            )}
-
-            {status === "saving" && (
-              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" />
-                Saving changes...
               </span>
             )}
           </div>

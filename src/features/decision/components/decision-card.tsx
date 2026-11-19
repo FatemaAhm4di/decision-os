@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 
 import {
@@ -106,6 +107,8 @@ export function DecisionCard({
         "group relative overflow-hidden rounded-3xl border bg-background/80",
         "backdrop-blur transition-all duration-300",
         "hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-2xl",
+        "motion-reduce:transform-none motion-reduce:transition-none",
+        "motion-reduce:hover:transform-none",
       ].join(" ")}
     >
       <div
@@ -115,6 +118,7 @@ export function DecisionCard({
             ? "bg-primary"
             : "bg-primary/20 group-hover:bg-primary",
         ].join(" ")}
+        aria-hidden="true"
       />
 
       <CardHeader className="pb-5">
@@ -125,14 +129,15 @@ export function DecisionCard({
                 "flex size-14 shrink-0 items-center justify-center rounded-2xl",
                 "ring-1 transition-all duration-300",
                 "group-hover:scale-105 group-hover:shadow-lg",
+                "motion-reduce:transition-none motion-reduce:group-hover:scale-100",
                 currentStatus.iconClass,
                 "ring-primary/15",
               ].join(" ")}
+              aria-hidden="true"
             >
               <StatusIcon
-                className="size-6 transition-transform duration-300 group-hover:rotate-6"
+                className="size-6"
                 strokeWidth={2}
-                aria-hidden="true"
               />
             </div>
 
@@ -156,6 +161,7 @@ export function DecisionCard({
                 className={[
                   "line-clamp-2 text-xl font-bold tracking-tight",
                   "transition-colors duration-300 group-hover:text-primary",
+                  "motion-reduce:transition-none",
                 ].join(" ")}
               >
                 {decision.title}
@@ -175,19 +181,20 @@ export function DecisionCard({
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           <div
             className={[
-              "rounded-2xl border bg-muted/30 p-5",
+              "rounded-2xl border bg-muted/30 p-3 sm:p-5",
               "transition-all duration-300 group-hover:bg-muted/50",
+              "motion-reduce:transition-none",
             ].join(" ")}
           >
             <ListTodo
-              className="mb-4 size-5 text-primary"
+              className="mb-3 size-5 text-primary sm:mb-4"
               aria-hidden="true"
             />
 
-            <p className="text-3xl font-bold text-foreground">
+            <p className="text-2xl font-bold text-foreground sm:text-3xl">
               {optionCount}
             </p>
 
@@ -198,16 +205,17 @@ export function DecisionCard({
 
           <div
             className={[
-              "rounded-2xl border bg-muted/30 p-5",
+              "rounded-2xl border bg-muted/30 p-3 sm:p-5",
               "transition-all duration-300 group-hover:bg-muted/50",
+              "motion-reduce:transition-none",
             ].join(" ")}
           >
             <SlidersHorizontal
-              className="mb-4 size-5 text-primary"
+              className="mb-3 size-5 text-primary sm:mb-4"
               aria-hidden="true"
             />
 
-            <p className="text-3xl font-bold text-foreground">
+            <p className="text-2xl font-bold text-foreground sm:text-3xl">
               {criterionCount}
             </p>
 
@@ -252,22 +260,21 @@ export function DecisionCard({
         />
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Link
-            href={`/decision/${decision.id}`}
-            className="flex-1"
+          <Button
+            render={<Link href={`/decision/${decision.id}`} />}
+            className="group w-full flex-1"
           >
-            <Button className="group w-full">
-              Open Decision
+            Open Decision
 
-              <ArrowRight
-                className={[
-                  "ml-2 size-4 transition-transform duration-300",
-                  "group-hover:translate-x-1",
-                ].join(" ")}
-                aria-hidden="true"
-              />
-            </Button>
-          </Link>
+            <ArrowRight
+              className={[
+                "ml-2 size-4 transition-transform duration-300",
+                "group-hover:translate-x-1",
+                "motion-reduce:transition-none motion-reduce:group-hover:translate-x-0",
+              ].join(" ")}
+              aria-hidden="true"
+            />
+          </Button>
 
           <DeleteDecisionButton
             decisionId={decision.id}

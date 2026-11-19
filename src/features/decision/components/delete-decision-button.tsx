@@ -1,8 +1,9 @@
+
 "use client";
 
 import { useState } from "react";
-
 import { Trash2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
 
@@ -16,11 +17,10 @@ export function DeleteDecisionButton({
   onDeleted,
 }: DeleteDecisionButtonProps) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(
-    null
-  );
 
   async function handleDelete() {
+    if (isDeleting) return;
+
     const confirmed = window.confirm(
       "Are you sure you want to delete this decision?"
     );
@@ -30,7 +30,6 @@ export function DeleteDecisionButton({
     }
 
     setIsDeleting(true);
-    setError(null);
 
     try {
       const response = await fetch(
@@ -41,27 +40,23 @@ export function DeleteDecisionButton({
       );
 
       if (!response.ok) {
-        const data = await response
-          .json()
-          .catch(() => null);
+        const data = await response.json().catch(() => null);
 
         throw new Error(
-          data?.message ??
-            "Failed to delete decision"
+          data?.message ?? "Failed to delete decision."
         );
       }
 
+      toast.success("Decision deleted successfully.");
+
       onDeleted();
     } catch (error) {
-      console.error(
-        "Failed to delete decision:",
-        error
-      );
+      console.error("Failed to delete decision:", error);
 
-      setError(
+      toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to delete decision"
+          : "Failed to delete decision."
       );
     } finally {
       setIsDeleting(false);
@@ -69,32 +64,24 @@ export function DeleteDecisionButton({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <Button
-        type="button"
-        variant="outline"
-        onClick={handleDelete}
-        disabled={isDeleting}
-        className="w-full sm:w-auto"
-      >
-        {isDeleting ? (
-          <>
-            <Loader2 className="size-4 animate-spin" />
-            Deleting...
-          </>
-        ) : (
-          <>
-            <Trash2 className="size-4" />
-            Delete
-          </>
-        )}
-      </Button>
-
-      {error && (
-        <p className="text-xs text-destructive">
-          {error}
-        </p>
+    <Button
+      type="button"
+      variant="outline"
+      onClick={handleDelete}
+      disabled={isDeleting}
+      className="w-full sm:w-auto"
+    >
+      {isDeleting ? (
+        <>
+          <Loader2 className="size-4 animate-spin" />
+          Deleting...
+        </>
+      ) : (
+        <>
+          <Trash2 className="size-4" />
+          Delete
+        </>
       )}
-    </div>
+    </Button>
   );
 }

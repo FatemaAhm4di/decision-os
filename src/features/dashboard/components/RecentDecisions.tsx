@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 
 import { ArrowRight, Plus } from "lucide-react";
@@ -31,28 +32,28 @@ export default function RecentDecisions() {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Link href="/decision">
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto"
-            >
-              View all
-              <ArrowRight
-                className="size-4"
-                aria-hidden="true"
-              />
-            </Button>
-          </Link>
+          <Button
+            render={<Link href="/decision" />}
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
+            View all
+            <ArrowRight
+              className="size-4"
+              aria-hidden="true"
+            />
+          </Button>
 
-          <Link href="/decision/new">
-            <Button className="w-full sm:w-auto">
-              <Plus
-                className="size-4"
-                aria-hidden="true"
-              />
-              New Decision
-            </Button>
-          </Link>
+          <Button
+            render={<Link href="/decision/new" />}
+            className="w-full sm:w-auto"
+          >
+            <Plus
+              className="size-4"
+              aria-hidden="true"
+            />
+            New Decision
+          </Button>
         </div>
       </div>
 

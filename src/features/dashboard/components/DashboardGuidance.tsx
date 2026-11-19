@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 
 import {
@@ -18,11 +19,11 @@ export default function DashboardGuidance() {
       <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-2xl">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-              <Lightbulb
-                className="size-5"
-                aria-hidden="true"
-              />
+            <div
+              className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground"
+              aria-hidden="true"
+            >
+              <Lightbulb className="size-5" />
             </div>
 
             <div>
@@ -101,18 +102,17 @@ export default function DashboardGuidance() {
           heavy lifting.
         </p>
 
-        <Link href="/decision/new">
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-          >
-            Create a decision
-            <ArrowRight
-              className="size-4"
-              aria-hidden="true"
-            />
-          </Button>
-        </Link>
+        <Button
+          render={<Link href="/decision/new" />}
+          variant="outline"
+          className="w-full sm:w-auto"
+        >
+          Create a decision
+          <ArrowRight
+            className="size-4"
+            aria-hidden="true"
+          />
+        </Button>
       </div>
     </section>
   );

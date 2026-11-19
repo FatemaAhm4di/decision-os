@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, LoaderCircle } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
 
@@ -23,13 +24,11 @@ export function DuplicateDecisionButton({
 }: DuplicateDecisionButtonProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
 
   async function handleDuplicate() {
     if (isLoading) return;
 
     setIsLoading(true);
-    setError("");
 
     try {
       const response = await fetch(
@@ -39,21 +38,26 @@ export function DuplicateDecisionButton({
         }
       );
 
-      const data =
-        (await response.json()) as DuplicateResponse;
+      const data = (await response.json().catch(() => null)) as
+        | DuplicateResponse
+        | null;
 
-      if (!response.ok || !data.decision?.id) {
+      if (!response.ok || !data?.decision?.id) {
         throw new Error(
-          data.error || "Failed to duplicate decision."
+          data?.error || "Failed to duplicate decision."
         );
       }
 
+      toast.success("Decision duplicated successfully.");
+
       router.push(`/decision/${data.decision.id}`);
       router.refresh();
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
+    } catch (error) {
+      console.error("Failed to duplicate decision:", error);
+
+      toast.error(
+        error instanceof Error
+          ? error.message
           : "Something went wrong. Please try again."
       );
     } finally {
@@ -62,37 +66,26 @@ export function DuplicateDecisionButton({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full sm:w-auto"
-        onClick={handleDuplicate}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <LoaderCircle
-            className="mr-2 size-4 animate-spin"
-            aria-hidden="true"
-          />
-        ) : (
-          <Copy
-            className="mr-2 size-4"
-            aria-hidden="true"
-          />
-        )}
-
-        {isLoading ? "Duplicating..." : "Duplicate"}
-      </Button>
-
-      {error && (
-        <p
-          role="alert"
-          className="max-w-xs text-sm text-destructive"
-        >
-          {error}
-        </p>
+    <Button
+      type="button"
+      variant="outline"
+      className="w-full sm:w-auto"
+      onClick={handleDuplicate}
+      disabled={isLoading}
+    >
+      {isLoading ? (
+        <LoaderCircle
+          className="mr-2 size-4 animate-spin"
+          aria-hidden="true"
+        />
+      ) : (
+        <Copy
+          className="mr-2 size-4"
+          aria-hidden="true"
+        />
       )}
-    </div>
+
+      {isLoading ? "Duplicating..." : "Duplicate"}
+    </Button>
   );
 }

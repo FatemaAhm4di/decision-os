@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Input } from "@/components/ui/Input";
@@ -13,9 +14,11 @@ export function DecisionSearch({
 }: Props) {
   return (
     <Input
+      type="search"
+      aria-label="Search decisions"
       placeholder="Search decisions..."
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(event) => onChange(event.target.value)}
       className="w-full"
     />
   );

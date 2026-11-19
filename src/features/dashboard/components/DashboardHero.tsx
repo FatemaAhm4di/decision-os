@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 
 import {
@@ -45,32 +46,30 @@ export default function DashboardHero() {
           </p>
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <Link href="/decision/new">
-              <Button
-                size="lg"
-                className="w-full sm:w-auto"
-              >
-                <Plus
-                  className="size-4"
-                  aria-hidden="true"
-                />
-                New Decision
-                <ArrowRight
-                  className="size-4"
-                  aria-hidden="true"
-                />
-              </Button>
-            </Link>
+            <Button
+              render={<Link href="/decision/new" />}
+              size="lg"
+              className="w-full sm:w-auto"
+            >
+              <Plus
+                className="size-4"
+                aria-hidden="true"
+              />
+              New Decision
+              <ArrowRight
+                className="size-4"
+                aria-hidden="true"
+              />
+            </Button>
 
-            <Link href="/decision">
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full sm:w-auto"
-              >
-                View Decisions
-              </Button>
-            </Link>
+            <Button
+              render={<Link href="/decision" />}
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto"
+            >
+              View Decisions
+            </Button>
           </div>
 
           <div className="mt-7 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-3">
@@ -102,7 +101,10 @@ export default function DashboardHero() {
 
         <div className="hidden shrink-0 lg:block">
           <div className="relative flex size-44 items-center justify-center rounded-3xl border border-border bg-background/70 shadow-sm backdrop-blur">
-            <div className="absolute inset-5 rounded-2xl border border-border" />
+            <div
+              className="absolute inset-5 rounded-2xl border border-border"
+              aria-hidden="true"
+            />
 
             <div className="relative flex size-20 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
               <CheckCircle2

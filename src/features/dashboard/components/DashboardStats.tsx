@@ -1,15 +1,18 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   BarChart3,
   CheckCircle2,
   ListChecks,
+  RotateCcw,
   Target,
   TriangleAlert,
 } from "lucide-react";
+
+import { Button } from "@/components/ui/Button";
 
 type DashboardDecision = {
   id: string;
@@ -44,16 +47,15 @@ export default function DashboardStats() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadStats() {
+  const loadStats = useCallback(
+    async (signal?: AbortSignal) => {
       setIsLoading(true);
       setHasError(false);
 
       try {
         const response = await fetch("/api/decision", {
           cache: "no-store",
+          signal,
         });
 
         const data = await response.json().catch(() => null);
@@ -61,29 +63,25 @@ export default function DashboardStats() {
         if (!response.ok) {
           throw new Error(
             data?.message ??
-              "Failed to fetch dashboard statistics"
+              "Failed to fetch dashboard statistics."
           );
         }
 
         if (!Array.isArray(data)) {
-          throw new Error("Invalid dashboard response");
+          throw new Error("Invalid dashboard response.");
         }
 
         const decisions = data as DashboardDecision[];
 
-        if (cancelled) {
-          return;
-        }
-
         const totalOptions = decisions.reduce(
           (total, decision) =>
-            total + decision.options.length,
+            total + (decision.options?.length ?? 0),
           0
         );
 
         const totalCriteria = decisions.reduce(
           (total, decision) =>
-            total + decision.criteria.length,
+            total + (decision.criteria?.length ?? 0),
           0
         );
 
@@ -98,28 +96,34 @@ export default function DashboardStats() {
           completedDecisions,
         });
       } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
+
         console.error(
           "Failed to load dashboard statistics:",
           error
         );
 
-        if (!cancelled) {
-          setStats(initialStats);
-          setHasError(true);
-        }
+        setHasError(true);
       } finally {
-        if (!cancelled) {
+        if (!signal?.aborted) {
           setIsLoading(false);
         }
       }
-    }
+    },
+    []
+  );
 
-    void loadStats();
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void loadStats(controller.signal);
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
-  }, []);
+  }, [loadStats]);
 
   const cards = [
     {
@@ -148,65 +152,105 @@ export default function DashboardStats() {
     },
   ];
 
-  const gridColumns =
-    cards.length === 2
-      ? "grid-cols-1 sm:grid-cols-2"
-      : "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4";
-
   return (
     <section
       aria-label="Dashboard statistics"
-      className={`grid gap-4 ${gridColumns}`}
+      aria-busy={isLoading}
+      className="space-y-3"
     >
-      {cards.map((card) => {
-        const Icon = card.icon;
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {cards.map((card) => {
+          const Icon = card.icon;
 
-        return (
-          <div
-            key={card.label}
-            className="rounded-2xl border border-border bg-card p-5 shadow-sm"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  {card.label}
-                </p>
+          return (
+            <div
+              key={card.label}
+              className="rounded-2xl border border-border bg-card p-5 shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {card.label}
+                  </p>
 
-                <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">
-                  {isLoading ? "—" : hasError ? "!" : card.value}
-                </p>
+                  <p
+                    className="mt-2 text-3xl font-bold tracking-tight text-foreground"
+                    aria-live="polite"
+                  >
+                    {isLoading
+                      ? "—"
+                      : hasError
+                        ? "—"
+                        : card.value}
+                  </p>
+                </div>
+
+                <div
+                  className={[
+                    "flex size-10 shrink-0 items-center justify-center rounded-xl",
+                    hasError
+                      ? "bg-destructive/10 text-destructive"
+                      : "bg-accent text-accent-foreground",
+                  ].join(" ")}
+                  aria-hidden="true"
+                >
+                  {hasError ? (
+                    <TriangleAlert className="size-5" />
+                  ) : (
+                    <Icon className="size-5" />
+                  )}
+                </div>
               </div>
 
-              <div
-                className={[
-                  "flex size-10 shrink-0 items-center justify-center rounded-xl",
-                  hasError
-                    ? "bg-destructive/10 text-destructive"
-                    : "bg-accent text-accent-foreground",
-                ].join(" ")}
-              >
-                {hasError ? (
-                  <TriangleAlert
-                    className="size-5"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <Icon
-                    className="size-5"
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
+              <p className="mt-3 text-xs leading-5 text-muted-foreground">
+                {hasError
+                  ? "Statistics are temporarily unavailable."
+                  : card.description}
+              </p>
             </div>
+          );
+        })}
+      </div>
 
-            <p className="mt-3 text-xs leading-5 text-muted-foreground">
-              {hasError
-                ? "Statistics are temporarily unavailable."
-                : card.description}
-            </p>
+      {hasError && (
+        <div
+          role="alert"
+          className="flex flex-col gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex items-start gap-3">
+            <TriangleAlert
+              className="mt-0.5 size-5 shrink-0 text-destructive"
+              aria-hidden="true"
+            />
+
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                Unable to load dashboard statistics
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Something went wrong while fetching your statistics.
+                Please try again.
+              </p>
+            </div>
           </div>
-        );
-      })}
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void loadStats()}
+            disabled={isLoading}
+            className="shrink-0"
+          >
+            <RotateCcw
+              className="size-4"
+              aria-hidden="true"
+            />
+            Try again
+          </Button>
+        </div>
+      )}
     </section>
   );
 }
