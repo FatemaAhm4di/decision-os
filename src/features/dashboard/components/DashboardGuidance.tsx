@@ -8,7 +8,7 @@ import {
   Scale,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/Button";
+import { buttonVariants } from "@/components/ui/Button";
 
 export default function DashboardGuidance() {
   return (
@@ -102,17 +102,16 @@ export default function DashboardGuidance() {
           heavy lifting.
         </p>
 
-        <Button
-          render={<Link href="/decision/new" />}
-          variant="outline"
-          className="w-full sm:w-auto"
+        <Link
+          href="/decision/new"
+          className={buttonVariants({
+            variant: "outline",
+            className: "w-full sm:w-auto",
+          })}
         >
           Create a decision
-          <ArrowRight
-            className="size-4"
-            aria-hidden="true"
-          />
-        </Button>
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </Link>
       </div>
     </section>
   );

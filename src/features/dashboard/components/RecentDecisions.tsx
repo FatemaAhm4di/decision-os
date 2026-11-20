@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { ArrowRight, Plus } from "lucide-react";
 
-import { Button } from "@/components/ui/Button";
+import { buttonVariants } from "@/components/ui/Button";
 import { DecisionList } from "@/features/decision/components/decision-list";
 
 export default function RecentDecisions() {
@@ -32,28 +32,26 @@ export default function RecentDecisions() {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button
-            render={<Link href="/decision" />}
-            variant="outline"
-            className="w-full sm:w-auto"
+          <Link
+            href="/decision"
+            className={buttonVariants({
+              variant: "outline",
+              className: "w-full sm:w-auto",
+            })}
           >
             View all
-            <ArrowRight
-              className="size-4"
-              aria-hidden="true"
-            />
-          </Button>
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </Link>
 
-          <Button
-            render={<Link href="/decision/new" />}
-            className="w-full sm:w-auto"
+          <Link
+            href="/decision/new"
+            className={buttonVariants({
+              className: "w-full sm:w-auto",
+            })}
           >
-            <Plus
-              className="size-4"
-              aria-hidden="true"
-            />
+            <Plus className="size-4" aria-hidden="true" />
             New Decision
-          </Button>
+          </Link>
         </div>
       </div>
 

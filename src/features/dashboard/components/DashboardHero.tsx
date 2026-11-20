@@ -8,7 +8,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/Button";
+import { buttonVariants } from "@/components/ui/Button";
 
 export default function DashboardHero() {
   return (
@@ -26,10 +26,7 @@ export default function DashboardHero() {
       <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-2xl">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-background/80 px-3.5 py-1.5 text-sm font-medium text-foreground shadow-sm backdrop-blur">
-            <Sparkles
-              className="size-4 text-primary"
-              aria-hidden="true"
-            />
+            <Sparkles className="size-4 text-primary" aria-hidden="true" />
             Decision workspace
           </div>
 
@@ -46,30 +43,28 @@ export default function DashboardHero() {
           </p>
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <Button
-              render={<Link href="/decision/new" />}
-              size="lg"
-              className="w-full sm:w-auto"
+            <Link
+              href="/decision/new"
+              className={buttonVariants({
+                size: "lg",
+                className: "w-full sm:w-auto",
+              })}
             >
-              <Plus
-                className="size-4"
-                aria-hidden="true"
-              />
+              <Plus className="size-4" aria-hidden="true" />
               New Decision
-              <ArrowRight
-                className="size-4"
-                aria-hidden="true"
-              />
-            </Button>
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
 
-            <Button
-              render={<Link href="/decision" />}
-              variant="outline"
-              size="lg"
-              className="w-full sm:w-auto"
+            <Link
+              href="/decision"
+              className={buttonVariants({
+                variant: "outline",
+                size: "lg",
+                className: "w-full sm:w-auto",
+              })}
             >
               View Decisions
-            </Button>
+            </Link>
           </div>
 
           <div className="mt-7 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-3">

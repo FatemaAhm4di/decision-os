@@ -11,7 +11,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/Button";
+import { buttonVariants } from "@/components/ui/Button";
 import {
   Card,
   CardContent,
@@ -95,11 +95,15 @@ export function DecisionCard({
   const currentStatus = statusConfig[status];
   const StatusIcon = currentStatus.icon;
 
-  const createdAt = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(decision.createdAt));
+  const parsedDate = new Date(decision.createdAt);
+
+  const createdAt = Number.isNaN(parsedDate.getTime())
+    ? "Date unavailable"
+    : new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(parsedDate);
 
   return (
     <Card
@@ -135,10 +139,7 @@ export function DecisionCard({
               ].join(" ")}
               aria-hidden="true"
             >
-              <StatusIcon
-                className="size-6"
-                strokeWidth={2}
-              />
+              <StatusIcon className="size-6" strokeWidth={2} />
             </div>
 
             <div className="min-w-0">
@@ -149,11 +150,7 @@ export function DecisionCard({
                   currentStatus.badgeClass,
                 ].join(" ")}
               >
-                <StatusIcon
-                  className="size-3.5"
-                  aria-hidden="true"
-                />
-
+                <StatusIcon className="size-3.5" aria-hidden="true" />
                 {currentStatus.label}
               </div>
 
@@ -172,7 +169,6 @@ export function DecisionCard({
                   className="size-4 shrink-0"
                   aria-hidden="true"
                 />
-
                 <span>{createdAt}</span>
               </div>
             </div>
@@ -198,9 +194,7 @@ export function DecisionCard({
               {optionCount}
             </p>
 
-            <p className="mt-1 text-sm text-muted-foreground">
-              Options
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Options</p>
           </div>
 
           <div
@@ -219,9 +213,7 @@ export function DecisionCard({
               {criterionCount}
             </p>
 
-            <p className="mt-1 text-sm text-muted-foreground">
-              Criteria
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Criteria</p>
           </div>
         </div>
 
@@ -260,9 +252,11 @@ export function DecisionCard({
         />
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button
-            render={<Link href={`/decision/${decision.id}`} />}
-            className="group w-full flex-1"
+          <Link
+            href={`/decision/${decision.id}`}
+            className={buttonVariants({
+              className: "group w-full flex-1",
+            })}
           >
             Open Decision
 
@@ -274,7 +268,7 @@ export function DecisionCard({
               ].join(" ")}
               aria-hidden="true"
             />
-          </Button>
+          </Link>
 
           <DeleteDecisionButton
             decisionId={decision.id}
