@@ -1,4 +1,6 @@
+
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
@@ -33,7 +35,7 @@ export async function POST(
     }
 
     const duplicatedDecision = await prisma.$transaction(
-      async (tx) => {
+      async (tx: Prisma.TransactionClient) => {
         const newDecision = await tx.decision.create({
           data: {
             title: `${decision.title} (Copy)`,
@@ -62,13 +64,6 @@ export async function POST(
           ])
         );
 
-        const optionsById = new Map(
-          decision.options.map((option) => [
-            option.id,
-            option,
-          ])
-        );
-
         const scores = decision.options.flatMap((option) =>
           option.scores.map((score) => {
             const newOption = newDecision.options.find(
@@ -82,9 +77,7 @@ export async function POST(
             );
 
             if (!newOption || !newCriterion) {
-              throw new Error(
-                "Failed to map duplicated score."
-              );
+              throw new Error("Failed to map duplicated score.");
             }
 
             return {
